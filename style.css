@@ -1,7 +1,12 @@
-/* styles.css - Common styles for both pages */
-
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100vh;
+    overflow: hidden; /* Prevent page scroll */
     margin: 0;
     padding: 0;
 }
@@ -12,10 +17,6 @@ body {
     display: flex;
     min-height: 100vh;
 }
-
-/* ============================================
-   SIDEBAR
-   ============================================ */
 
 .sidebar {
     width: 250px;
@@ -62,14 +63,13 @@ body {
     font-weight: 600;
 }
 
-/* ============================================
-   MAIN CONTENT
-   ============================================ */
-
 .main-content {
     margin-left: 250px;
     flex: 1;
     padding: 20px;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .header {
@@ -90,10 +90,6 @@ body {
     color: #666;
     font-size: 14px;
 }
-
-/* ============================================
-   CONTROLS (for update_date page)
-   ============================================ */
 
 .controls {
     background: white;
@@ -161,21 +157,18 @@ body {
     display: none;
 }
 
-/* ============================================
-   TABLE
-   ============================================ */
-
 .table-container {
-    overflow-x: auto;
+    overflow: auto; /* Both horizontal and vertical scroll */
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    max-height: 600px;
+    max-height: calc(100vh - 250px); /* Dynamic height */
+    position: relative;
 }
 
 table {
     width: 100%;
-    min-width: 800px;
+    min-width: max-content; /* Table expands based on content */
     border-collapse: collapse;
 }
 
@@ -217,10 +210,6 @@ tr.blocked:hover {
     background: #ffcccc !important;
 }
 
-/* ============================================
-   FORM INPUTS
-   ============================================ */
-
 .edit-input {
     width: 100%;
     min-width: 120px;
@@ -242,10 +231,6 @@ tr.blocked:hover {
     padding: 6px 8px;
     cursor: pointer;
 }
-
-/* ============================================
-   BUTTONS
-   ============================================ */
 
 .btn {
     padding: 6px 12px;
@@ -326,10 +311,6 @@ tr.blocked:hover {
     background: #003d7a;
 }
 
-/* ============================================
-   MESSAGES
-   ============================================ */
-
 .message {
     position: fixed;
     top: 20px;
@@ -366,10 +347,6 @@ tr.blocked:hover {
     border: 1px solid #f5c6cb;
 }
 
-/* ============================================
-   LOADING
-   ============================================ */
-
 .loading {
     text-align: center;
     padding: 40px;
@@ -377,8 +354,34 @@ tr.blocked:hover {
     font-size: 16px;
 }
 
+.table-container::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar,
+.main-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-track,
+.main-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-container::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb,
+.main-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover,
+.sidebar::-webkit-scrollbar-thumb:hover,
+.main-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
 /* ============================================
-   RESPONSIVE
+   RESPONSIVE DESIGN
    ============================================ */
 
 @media (max-width: 768px) {
@@ -403,9 +406,17 @@ tr.blocked:hover {
     .selected-count {
         align-self: flex-start;
     }
+
+    .table-container {
+        max-height: calc(100vh - 280px);
+    }
 }
 
 @media (max-width: 576px) {
+    html, body {
+        overflow: auto; /* Allow scroll on mobile */
+    }
+
     body {
         flex-direction: column;
     }
@@ -421,6 +432,7 @@ tr.blocked:hover {
     .main-content {
         margin-left: 0;
         padding: 15px;
+        height: auto;
     }
 
     .nav-links {
@@ -447,37 +459,6 @@ tr.blocked:hover {
     }
 }
 
-/* ============================================
-   SCROLLBAR STYLING
-   ============================================ */
-
-.table-container::-webkit-scrollbar,
-.sidebar::-webkit-scrollbar,
-.column-selector::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-.table-container::-webkit-scrollbar-track,
-.sidebar::-webkit-scrollbar-track,
-.column-selector::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.table-container::-webkit-scrollbar-thumb,
-.sidebar::-webkit-scrollbar-thumb,
-.column-selector::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
-}
-
-.table-container::-webkit-scrollbar-thumb:hover,
-.sidebar::-webkit-scrollbar-thumb:hover,
-.column-selector::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-
 .text-center {
     text-align: center;
 }
@@ -488,4 +469,22 @@ tr.blocked:hover {
 
 .mb-20 {
     margin-bottom: 20px;
+}
+
+@media print {
+    .sidebar,
+    .controls,
+    .download-btn,
+    .btn {
+        display: none;
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .table-container {
+        max-height: none;
+        overflow: visible;
+    }
 }

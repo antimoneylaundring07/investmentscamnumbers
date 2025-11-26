@@ -72,10 +72,10 @@ async function loadData() {
 
 async function initUpdateDatePage() {
     console.log('🚀 Initializing Update Date page...');
-    
+
     try {
         const fetchedData = await loadData();
-        
+
         data = fetchedData.map(item => {
             const filtered = {
                 id: item.id,
@@ -89,12 +89,12 @@ async function initUpdateDatePage() {
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dataTable').style.display = 'table';
-        
+
         createColumnSelector();
         renderUpdateDateTable();
         updateSelectedCount();
     } catch (error) {
-        document.getElementById('loading').innerHTML = 
+        document.getElementById('loading').innerHTML =
             `<div style="color: red;">❌ Error loading data: ${error.message}<br><br>
             Check console for details.</div>`;
         showMessage('❌ Error loading data: ' + error.message, 'error');
@@ -104,7 +104,7 @@ async function initUpdateDatePage() {
 function createColumnSelector() {
     const selector = document.getElementById('columnSelector');
     if (!selector) return;
-    
+
     SHOW_COLUMNS.forEach(col => {
         if (col === "No of Days") return;
 
@@ -151,7 +151,7 @@ function toggleColumn(checkbox) {
 function updateSelectedCount() {
     const countEl = document.getElementById('selectedCount');
     if (!countEl) return;
-    
+
     const count = selectedColumns.length;
     countEl.textContent = count + ' selected';
     countEl.style.display = count > 0 ? 'inline-block' : 'none';
@@ -265,7 +265,15 @@ async function updateRow(rowId) {
 
     if ("Blocked Date" in updatedData) {
         updatedData["No of Days"] = calculateDays(updatedData["Blocked Date"]);
+        // If Blocked Date is filled, Unblocked Date should become "NA" (unless already filled)
+        if (
+            updatedData["Blocked Date"] &&
+            updatedData["Blocked Date"] !== "NA"
+        ) {
+            updatedData["Unblocked Date"] = "NA";
+        }
     }
+
 
     if ("Unblocked Date" in updatedData && updatedData["Unblocked Date"] && updatedData["Unblocked Date"] !== "NA") {
         updatedData["Blocked Date"] = "NA";
@@ -274,7 +282,7 @@ async function updateRow(rowId) {
 
     try {
         console.log('💾 Updating row:', rowId, updatedData);
-        
+
         const { data: result, error } = await supabaseClient
             .from(TABLE_NAME)
             .update(updatedData)
@@ -304,17 +312,17 @@ async function updateRow(rowId) {
 
 async function initDashboardPage() {
     console.log('🚀 Initializing Dashboard page...');
-    
+
     try {
         const fetchedData = await loadData();
         data = fetchedData;
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dataTable').style.display = 'table';
-        
+
         renderDashboardTable();
     } catch (error) {
-        document.getElementById('loading').innerHTML = 
+        document.getElementById('loading').innerHTML =
             `<div style="color: red;">❌ Error loading data: ${error.message}<br><br>
             Check console for details.</div>`;
     }
@@ -380,9 +388,9 @@ function downloadCSV() {
 document.addEventListener('DOMContentLoaded', () => {
     // Detect which page we're on
     const currentPage = window.location.pathname.split('/').pop();
-    
+
     console.log('📄 Current page:', currentPage);
-    
+
     if (currentPage === 'update_data.html' || currentPage === '') {
         // Update Date page
         if (document.getElementById('columnSelector')) {
