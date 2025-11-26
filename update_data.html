@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Date - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>Dashboard</h3>
+        <ul class="nav-links">
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="update_data.html" class="active">Update Data</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Update Date Dashboard</h1>
+            <p>Select columns and edit rows</p>
+        </div>
+
+        <div class="controls">
+            <div class="controls-header">
+                <label>📝 Select Columns to Edit:</label>
+                <span class="selected-count" id="selectedCount">0 selected</span>
+            </div>
+            <div class="column-selector" id="columnSelector"></div>
+        </div>
+
+        <div class="table-container">
+            <div id="loading" class="loading">Loading data...</div>
+            <table id="dataTable" style="display:none;">
+                <thead id="tableHeader"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

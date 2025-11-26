@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - View All</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>Dashboard</h3>
+        <ul class="nav-links">
+            <li><a href="index.html" class="active">Dashboard</a></li>
+            <li><a href="update_data.html">Update Data</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>All Data Dashboard</h1>
+            <p>Read-only view of all columns</p>
+        </div>
+
+        <div class="table-container">
+            <div id="loading" class="loading">Loading data...</div>
+            <table id="dataTable" style="display:none;">
+                <thead id="tableHeader"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <button class="download-btn" onclick="downloadCSV()">📥 Download All Data (CSV)</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
