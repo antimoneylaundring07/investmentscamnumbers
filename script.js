@@ -6,6 +6,7 @@ const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let data = [];
+let filteredData = [];
 let selectedColumns = [];
 let editingRowId = null;
 
@@ -70,6 +71,116 @@ async function loadData() {
     }
 }
 
+// ============================================
+// FILTER/SEARCH FUNCTIONALITY
+// ============================================
+
+function createSearchBox() {
+    const controlsSection = document.querySelector('.header');
+    if (!controlsSection) return;
+
+    const searchContainer = document.createElement('div');
+    searchContainer.style.display = 'flex';
+    searchContainer.style.alignItems = 'center';
+    searchContainer.style.gap = '10px';
+    searchContainer.style.justifyContent = 'flex-end';
+    
+    searchContainer.innerHTML = `
+        <label for="searchInput" style="font-weight: 600; color: #333; font-size: 14px; white-space: nowrap;">
+            🔍 Search/Filter:
+        </label>
+        <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search by name, number, status..."
+            style="
+                width: 300px;
+                padding: 8px 12px;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                font-size: 14px;
+            "
+        />
+    `;
+    controlsSection.appendChild(searchContainer);
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        filterTable(e.target.value);
+    });
+}
+
+
+function createSearchBoxDashboard() {
+    const header = document.querySelector('.header');
+    if (!header) return;
+
+    const searchContainer = document.createElement('div');
+    searchContainer.style.display = 'flex';
+    searchContainer.style.alignItems = 'center';
+    searchContainer.style.gap = '10px';
+    searchContainer.style.justifyContent = 'flex-end';
+    
+    searchContainer.innerHTML = `
+        <label for="searchInputDash" style="font-weight: 600; color: #333; font-size: 14px; white-space: nowrap;">
+            🔍 Search/Filter:
+        </label>
+        <input 
+            type="text" 
+            id="searchInputDash" 
+            placeholder="Search by name, number, status..."
+            style="
+                width: 300px;
+                padding: 8px 12px;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                font-size: 14px;
+            "
+        />
+    `;
+    header.appendChild(searchContainer);
+
+    document.getElementById('searchInputDash').addEventListener('input', (e) => {
+        filterTableDashboard(e.target.value);
+    });
+}
+
+
+function filterTable(searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+    
+    if (!searchTerm || searchTerm.trim() === '') {
+        filteredData = [...data];
+    } else {
+        filteredData = data.filter(row => {
+            return Object.values(row).some(value => 
+                String(value || '').toLowerCase().includes(searchLower)
+            );
+        });
+    }
+    
+    renderUpdateDateTable();
+}
+
+function filterTableDashboard(searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+    
+    if (!searchTerm || searchTerm.trim() === '') {
+        filteredData = [...data];
+    } else {
+        filteredData = data.filter(row => {
+            return Object.values(row).some(value => 
+                String(value || '').toLowerCase().includes(searchLower)
+            );
+        });
+    }
+    
+    renderDashboardTable();
+}
+
+// ============================================
+// UPDATE DATE PAGE FUNCTIONS
+// ============================================
+
 async function initUpdateDatePage() {
     console.log('🚀 Initializing Update Date page...');
 
@@ -87,9 +198,11 @@ async function initUpdateDatePage() {
             return filtered;
         });
 
+        filteredData = [...data];
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dataTable').style.display = 'table';
 
+        createSearchBox();
         createColumnSelector();
         renderUpdateDateTable();
         updateSelectedCount();
@@ -158,9 +271,17 @@ function updateSelectedCount() {
 }
 
 function renderUpdateDateTable() {
-    if (data.length === 0) return;
+    const displayData = filteredData.length > 0 && filteredData.length < data.length 
+        ? filteredData 
+        : data;
+    
+    if (displayData.length === 0) {
+        const tbody = document.getElementById('tableBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
+        return;
+    }
 
-    const columns = Object.keys(data[0]);
+    const columns = Object.keys(displayData[0]);
 
     const header = document.getElementById('tableHeader');
     header.innerHTML = '<tr>' +
@@ -170,7 +291,7 @@ function renderUpdateDateTable() {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
 
-    data.forEach(row => {
+    displayData.forEach(row => {
         const tr = document.createElement('tr');
         const isEditing = editingRowId === row.id;
 
@@ -265,7 +386,6 @@ async function updateRow(rowId) {
 
     if ("Blocked Date" in updatedData) {
         updatedData["No of Days"] = calculateDays(updatedData["Blocked Date"]);
-        // If Blocked Date is filled, Unblocked Date should become "NA" (unless already filled)
         if (
             updatedData["Blocked Date"] &&
             updatedData["Blocked Date"] !== "NA"
@@ -273,7 +393,6 @@ async function updateRow(rowId) {
             updatedData["Unblocked Date"] = "NA";
         }
     }
-
 
     if ("Unblocked Date" in updatedData && updatedData["Unblocked Date"] && updatedData["Unblocked Date"] !== "NA") {
         updatedData["Blocked Date"] = "NA";
@@ -308,7 +427,9 @@ async function updateRow(rowId) {
     }
 }
 
+// ============================================
 // DASHBOARD PAGE FUNCTIONS
+// ============================================
 
 async function initDashboardPage() {
     console.log('🚀 Initializing Dashboard page...');
@@ -317,9 +438,11 @@ async function initDashboardPage() {
         const fetchedData = await loadData();
         data = fetchedData;
 
+        filteredData = [...data];
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dataTable').style.display = 'table';
 
+        createSearchBoxDashboard();
         renderDashboardTable();
     } catch (error) {
         document.getElementById('loading').innerHTML =
@@ -329,9 +452,17 @@ async function initDashboardPage() {
 }
 
 function renderDashboardTable() {
-    if (data.length === 0) return;
+    const displayData = filteredData.length > 0 && filteredData.length < data.length 
+        ? filteredData 
+        : data;
+    
+    if (displayData.length === 0) {
+        const tbody = document.getElementById('tableBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
+        return;
+    }
 
-    const columns = Object.keys(data[0]);
+    const columns = Object.keys(displayData[0]);
 
     const header = document.getElementById('tableHeader');
     header.innerHTML = '<tr>' + columns.map(col => '<th>' + col + '</th>').join('') + '</tr>';
@@ -339,10 +470,9 @@ function renderDashboardTable() {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
 
-    data.forEach(row => {
+    displayData.forEach(row => {
         const tr = document.createElement('tr');
 
-        // Highlight blocked status
         const whatsappStatus = row['WhatsApp Status'] || row['whatsapp_status'] || '';
         if (whatsappStatus.toString().toLowerCase().trim() === 'blocked') {
             tr.className = 'blocked';
@@ -386,18 +516,15 @@ function downloadCSV() {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Detect which page we're on
     const currentPage = window.location.pathname.split('/').pop();
 
     console.log('📄 Current page:', currentPage);
 
     if (currentPage === 'update_data.html' || currentPage === '') {
-        // Update Date page
         if (document.getElementById('columnSelector')) {
             initUpdateDatePage();
         }
-    } else if (currentPage === 'index.html') {
-        // Dashboard page
+    } else if (currentPage === 'index.html' || currentPage === 'index.html') {
         initDashboardPage();
     }
 });
