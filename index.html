@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
     <div class="sidebar">
         <h3>Dashboard</h3>
@@ -19,6 +21,10 @@
     <div class="main-content">
         <div class="header">
             <h1>All Data Dashboard</h1>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="download-btn" onclick="triggerImport()" style="margin-top: 0px;">📤 Import</button>
+            </div>
+            <input type="file" id="importFile" accept=".csv" style="display:none;" />
         </div>
 
         <div class="table-container">
@@ -34,4 +40,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

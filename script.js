@@ -84,10 +84,10 @@ function createSearchBox() {
     searchContainer.style.alignItems = 'center';
     searchContainer.style.gap = '10px';
     searchContainer.style.justifyContent = 'flex-end';
-    
+
     searchContainer.innerHTML = `
         <label for="searchInput" style="font-weight: 600; color: #333; font-size: 14px; white-space: nowrap;">
-            🔍 Search/Filter:
+            🔍 Search:
         </label>
         <input 
             type="text" 
@@ -119,10 +119,10 @@ function createSearchBoxDashboard() {
     searchContainer.style.alignItems = 'center';
     searchContainer.style.gap = '10px';
     searchContainer.style.justifyContent = 'flex-end';
-    
+
     searchContainer.innerHTML = `
         <label for="searchInputDash" style="font-weight: 600; color: #333; font-size: 14px; white-space: nowrap;">
-            🔍 Search/Filter:
+            🔍 Search:
         </label>
         <input 
             type="text" 
@@ -147,33 +147,33 @@ function createSearchBoxDashboard() {
 
 function filterTable(searchTerm) {
     const searchLower = searchTerm.toLowerCase();
-    
+
     if (!searchTerm || searchTerm.trim() === '') {
         filteredData = [...data];
     } else {
         filteredData = data.filter(row => {
-            return Object.values(row).some(value => 
+            return Object.values(row).some(value =>
                 String(value || '').toLowerCase().includes(searchLower)
             );
         });
     }
-    
+
     renderUpdateDateTable();
 }
 
 function filterTableDashboard(searchTerm) {
     const searchLower = searchTerm.toLowerCase();
-    
+
     if (!searchTerm || searchTerm.trim() === '') {
         filteredData = [...data];
     } else {
         filteredData = data.filter(row => {
-            return Object.values(row).some(value => 
+            return Object.values(row).some(value =>
                 String(value || '').toLowerCase().includes(searchLower)
             );
         });
     }
-    
+
     renderDashboardTable();
 }
 
@@ -271,10 +271,10 @@ function updateSelectedCount() {
 }
 
 function renderUpdateDateTable() {
-    const displayData = filteredData.length > 0 && filteredData.length < data.length 
-        ? filteredData 
+    const displayData = filteredData.length > 0 && filteredData.length < data.length
+        ? filteredData
         : data;
-    
+
     if (displayData.length === 0) {
         const tbody = document.getElementById('tableBody');
         if (tbody) tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
@@ -452,10 +452,10 @@ async function initDashboardPage() {
 }
 
 function renderDashboardTable() {
-    const displayData = filteredData.length > 0 && filteredData.length < data.length 
-        ? filteredData 
+    const displayData = filteredData.length > 0 && filteredData.length < data.length
+        ? filteredData
         : data;
-    
+
     if (displayData.length === 0) {
         const tbody = document.getElementById('tableBody');
         if (tbody) tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
@@ -528,3 +528,109 @@ document.addEventListener('DOMContentLoaded', () => {
         initDashboardPage();
     }
 });
+
+// Import button click se hidden file input open
+function triggerImport() {
+    const fileInput = document.getElementById('importFile');
+    if (!fileInput) {
+        showMessage('❌ Import file input not found', 'error');
+        return;
+    }
+    fileInput.value = '';
+    fileInput.click();
+}
+
+// File select hone ke baad handle karo
+document.addEventListener('change', async (e) => {
+    if (e.target && e.target.id === 'importFile') {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const importBtn = document.getElementById('importBtn');
+        const originalText = importBtn ? importBtn.innerHTML : '';
+
+        // Loading state ON
+        if (importBtn) {
+            importBtn.disabled = true;
+            importBtn.innerHTML = '⏳ Importing...';
+        }
+
+        try {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showMessage('❌ Please select a CSV file', 'error');
+                return;
+            }
+
+            const text = await file.text();
+            const rows = text.split('\n').map(r => r.trim()).filter(r => r.length > 0);
+            if (rows.length < 2) {
+                showMessage('❌ CSV file has no data', 'error');
+                return;
+            }
+
+            const headers = rows[0].split(',').map(h => h.replace(/(^"|"$)/g, '').trim());
+
+            const newRecords = rows.slice(1).map(line => {
+                const cols = line.split(',');
+                const obj = {};
+                headers.forEach((h, idx) => {
+                    const raw = cols[idx] !== undefined ? cols[idx] : '';
+                    obj[h] = raw.replace(/(^"|"$)/g, '').trim();
+                });
+                return obj;
+            });
+
+            if (newRecords.length === 0) {
+                showMessage('❌ No valid rows found in CSV', 'error');
+                return;
+            }
+
+            const recordsWithId = newRecords.filter(r => r.id);
+            const recordsWithoutId = newRecords.filter(r => !r.id);
+
+            if (recordsWithId.length > 0) {
+                for (const rec of recordsWithId) {
+                    const id = rec.id;
+                    delete rec.id;
+
+                    const { error } = await supabaseClient
+                        .from(TABLE_NAME)
+                        .update(rec)
+                        .eq('id', id);
+
+                    if (error) {
+                        console.error('Update error for id', id, error);
+                    }
+                }
+            }
+
+            if (recordsWithoutId.length > 0) {
+                const { error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .insert(recordsWithoutId);
+
+                if (error) {
+                    console.error('Insert error:', error);
+                    showMessage('❌ Error inserting some rows: ' + error.message, 'error');
+                }
+            }
+
+            showMessage('✅ Import completed. Refreshing data...', 'success');
+            const fetchedData = await loadData();
+            data = fetchedData;
+            filteredData = [...data];
+            renderDashboardTable();
+        } catch (err) {
+            console.error('Import error:', err);
+            showMessage('❌ Import failed: ' + err.message, 'error');
+        } finally {
+            // Loading state OFF
+            if (importBtn) {
+                importBtn.disabled = false;
+                importBtn.innerHTML = originalText || '📤 Import CSV';
+            }
+        }
+    }
+});
+
+
