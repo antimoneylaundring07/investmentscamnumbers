@@ -465,7 +465,9 @@ function renderDashboardTable() {
     const columns = Object.keys(displayData[0]);
 
     const header = document.getElementById('tableHeader');
-    header.innerHTML = '<tr>' + columns.map(col => '<th>' + col + '</th>').join('') + '</tr>';
+    header.innerHTML = '<tr>' +
+        columns.map(col => '<th>' + col + '</th>').join('') +
+        '<th>Actions</th></tr>';
 
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
@@ -483,6 +485,15 @@ function renderDashboardTable() {
             td.textContent = row[col] || '';
             tr.appendChild(td);
         });
+
+        // Add delete button
+        const deleteTd = document.createElement('td');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'btn btn-cancel';
+        deleteBtn.onclick = () => deleteRowFromDashboard(row.id, tr, deleteBtn);
+        deleteTd.appendChild(deleteBtn);
+        tr.appendChild(deleteTd);
 
         tbody.appendChild(tr);
     });
@@ -633,4 +644,32 @@ document.addEventListener('change', async (e) => {
     }
 });
 
+async function deleteRowFromDashboard(rowId, rowElem, btnElem) {
+    if (!confirm('Really delete this row?')) return;
+    btnElem.disabled = true;
+    btnElem.textContent = 'Deleting...';
+    try {
+        const { error } = await supabaseClient
+            .from(TABLE_NAME)
+            .delete()
+            .eq('id', rowId);
+
+        if (error) {
+            showMessage('❌ Delete failed: ' + error.message, 'error');
+            btnElem.disabled = false;
+            btnElem.textContent = 'Delete';
+            return;
+        }
+
+        showMessage('✅ Row deleted', 'success');
+        // Remove from local data and refresh table
+        data = data.filter(r => r.id !== rowId);
+        filteredData = filteredData.filter(r => r.id !== rowId);
+        renderDashboardTable();
+    } catch (e) {
+        showMessage('❌ Delete error: ' + e.message, 'error');
+        btnElem.disabled = false;
+        btnElem.textContent = 'Delete';
+    }
+}
 
