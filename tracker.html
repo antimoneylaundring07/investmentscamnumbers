@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <h3>Dashboard</h3>
+        <ul class="nav-links">
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="update_data.html">Update Data</a></li>
+            <li><a href="tracker.html" class="active">Tracker</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h1>Tracker & Summary</h1>
+        </div>
+
+        <div id="loading" class="loading">⏳ Loading data...</div>
+
+        <!-- Summary Table -->
+        <div id="summaryContainer" style="display: none;">
+            <div class="summary-section">
+                <table class="tracker-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2" style="text-align: center;">📊 Summary Statistics</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Total Numbers -->
+                        <tr class="section-header">
+                            <td style="font-weight: bold; color: #0066cc; font-size: 16px;">Total Numbers</td>
+                            <td id="totalCount" style="font-weight: bold; color: #0066cc; font-size: 16px; text-align: right;">0</td>
+                        </tr>
+
+                        <!-- SIM Type Section -->
+                        <tr class="category-header">
+                            <td colspan="2" style="background: #f0f8ff; font-weight: 600; color: #333;">SIM Type Breakdown</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left: 30px;">PREPAID</td>
+                            <td id="prepaidCount" style="text-align: right;">0</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left: 30px;">POSTPAID</td>
+                            <td id="postpaidCount" style="text-align: right;">0</td>
+                        </tr>
+
+                        <!-- WhatsApp Status Section -->
+                        <tr class="category-header">
+                            <td colspan="2" style="background: #f0f8ff; font-weight: 600; color: #333;">WhatsApp Status Breakdown</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left: 30px;">Active</td>
+                            <td id="activeCount" style="text-align: right;">0</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left: 30px;">Blocked</td>
+                            <td id="blockedCount" style="text-align: right;">0</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left: 30px;">Restricted</td>
+                            <td id="restrictedCount" style="text-align: right;">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

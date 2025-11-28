@@ -53,7 +53,6 @@ function showMessage(text, type) {
 
 async function loadData() {
     try {
-        console.log('📡 Fetching data from Supabase...');
         const { data: fetchedData, error } = await supabaseClient
             .from(TABLE_NAME)
             .select('*');
@@ -177,13 +176,7 @@ function filterTableDashboard(searchTerm) {
     renderDashboardTable();
 }
 
-// ============================================
-// UPDATE DATE PAGE FUNCTIONS
-// ============================================
-
 async function initUpdateDatePage() {
-    console.log('🚀 Initializing Update Date page...');
-
     try {
         const fetchedData = await loadData();
 
@@ -400,7 +393,6 @@ async function updateRow(rowId) {
     }
 
     try {
-        console.log('💾 Updating row:', rowId, updatedData);
 
         const { data: result, error } = await supabaseClient
             .from(TABLE_NAME)
@@ -412,8 +404,6 @@ async function updateRow(rowId) {
             console.error('❌ Update error:', error);
             throw error;
         }
-
-        console.log('✅ Update successful:', result);
 
         const rowIndex = data.findIndex(r => r.id === rowId);
         data[rowIndex] = { ...data[rowIndex], ...updatedData };
@@ -432,8 +422,6 @@ async function updateRow(rowId) {
 // ============================================
 
 async function initDashboardPage() {
-    console.log('🚀 Initializing Dashboard page...');
-
     try {
         const fetchedData = await loadData();
         data = fetchedData;
@@ -478,6 +466,10 @@ function renderDashboardTable() {
         const whatsappStatus = row['WhatsApp Status'] || row['whatsapp_status'] || '';
         if (whatsappStatus.toString().toLowerCase().trim() === 'blocked') {
             tr.className = 'blocked';
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'active') {
+            tr.className = 'active';
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'restricted') {
+            tr.className = 'restricted';
         }
 
         columns.forEach(col => {
@@ -528,9 +520,6 @@ function downloadCSV() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const currentPage = window.location.pathname.split('/').pop();
-
-    console.log('📄 Current page:', currentPage);
-
     if (currentPage === 'update_data.html' || currentPage === '') {
         if (document.getElementById('columnSelector')) {
             initUpdateDatePage();
@@ -673,3 +662,99 @@ async function deleteRowFromDashboard(rowId, rowElem, btnElem) {
     }
 }
 
+async function loadData() {
+    try {
+        const { data: fetchedData, error } = await supabaseClient
+            .from(TABLE_NAME)
+            .select('*');
+
+        if (error) {
+            console.error('❌ Supabase error:', error);
+            throw error;
+        }
+
+        console.log('✅ Data fetched:', fetchedData);
+        return fetchedData;
+    } catch (error) {
+        console.error('❌ Error:', error);
+        throw error;
+    }
+}
+
+function calculateStatistics(data) {
+    const totalCount = data.length;
+
+    const simTypeStats = {
+        PREPAID: 0,
+        POSTPAID: 0
+    };
+
+    const whatsappStatusStats = {
+        Active: 0,
+        Blocked: 0,
+        Restricted: 0
+    };
+
+    data.forEach((row, index) => {
+        // SIM Type - exact column name: "Sim Type"
+        const simType = row['Sim Type'];
+        
+        if (simType) {
+            const simTypeUpper = simType.toUpperCase().trim();
+            if (simTypeUpper === 'PREPAID') {
+                simTypeStats.PREPAID++;
+            } else if (simTypeUpper === 'POSTPAID') {
+                simTypeStats.POSTPAID++;
+            }
+        }
+
+        // WhatsApp Status - exact column name: "WhatsApp Status"
+        const whatsappStatus = row['WhatsApp Status'];
+        
+        if (whatsappStatus) {
+            const statusLower = whatsappStatus.toString().toLowerCase().trim();
+            if (statusLower === 'active') {
+                whatsappStatusStats.Active++;
+            } else if (statusLower === 'blocked') {
+                whatsappStatusStats.Blocked++;
+            } else if (statusLower === 'restricted') {
+                whatsappStatusStats.Restricted++;
+            }
+        }
+    });
+
+    return {
+        totalCount,
+        simTypeStats,
+        whatsappStatusStats
+    };
+}
+
+function updateUI(stats) {
+    document.getElementById('totalCount').textContent = stats.totalCount.toLocaleString();
+    document.getElementById('prepaidCount').textContent = stats.simTypeStats.PREPAID;
+    document.getElementById('postpaidCount').textContent = stats.simTypeStats.POSTPAID;
+    document.getElementById('activeCount').textContent = stats.whatsappStatusStats.Active;
+    document.getElementById('blockedCount').textContent = stats.whatsappStatusStats.Blocked;
+    document.getElementById('restrictedCount').textContent = stats.whatsappStatusStats.Restricted;
+}
+
+async function initTrackerPage() {
+    try {
+        const fetchedData = await loadData();
+        const stats = calculateStatistics(fetchedData);
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('summaryContainer').style.display = 'block';
+
+        updateUI(stats);
+    } catch (error) {
+        document.getElementById('loading').innerHTML =
+            `<div style="color: red;">❌ Error loading data: ${error.message}<br><br>
+            Check console for details.</div>`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initTrackerPage();
+});

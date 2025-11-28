@@ -209,6 +209,14 @@ tr.blocked {
     background: #ffe6e6 !important;
 }
 
+tr.active{
+    background: #d4edda !important;
+}
+
+tr.restricted{
+    background: #fff3cd !important;
+}
+
 tr.blocked:hover {
     background: #ffcccc !important;
 }
@@ -490,4 +498,70 @@ tr.blocked:hover {
         max-height: none;
         overflow: visible;
     }
+}
+
+/* ============================================
+   TRACKER PAGE STYLES
+   ============================================ */
+
+.summary-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    max-width: 500px;
+}
+
+.tracker-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tracker-table thead {
+    background: #0066cc;
+    color: white;
+}
+
+.tracker-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.tracker-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 14px;
+}
+
+.tracker-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.tracker-table .section-header {
+    background: #f0f8ff;
+    border-top: 2px solid #0066cc;
+    border-bottom: 2px solid #0066cc;
+}
+
+.tracker-table .section-header td {
+    padding: 15px;
+    border: none;
+}
+
+.tracker-table .category-header {
+    background: #e6f2ff;
+}
+
+.tracker-table .category-header td {
+    padding: 12px 15px;
+    border: none;
+    border-top: 1px solid #cce5ff;
+    border-bottom: 1px solid #cce5ff;
+}
+
+.tracker-table tbody tr:last-child td {
+    border-bottom: 1px solid #dee2e6;
 }
