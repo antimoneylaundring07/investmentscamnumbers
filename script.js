@@ -183,7 +183,8 @@ async function initUpdateDatePage() {
         data = fetchedData.map(item => {
             const filtered = {
                 id: item.id,
-                Number: item.Number || ''
+                Number: item.Number || '',
+                Login_user: item['Login User'] || ''
             };
             SHOW_COLUMNS.forEach(col => {
                 filtered[col] = item[col] || '';
@@ -673,7 +674,7 @@ async function loadData() {
             throw error;
         }
 
-        console.log('✅ Data fetched:', fetchedData);
+        // console.log('✅ Data fetched:', fetchedData);
         return fetchedData;
     } catch (error) {
         console.error('❌ Error:', error);
@@ -686,7 +687,8 @@ function calculateStatistics(data) {
 
     const simTypeStats = {
         PREPAID: 0,
-        POSTPAID: 0
+        POSTPAID: 0,
+        Disposable_numbers: 0
     };
 
     const whatsappStatusStats = {
@@ -695,22 +697,32 @@ function calculateStatistics(data) {
         Restricted: 0
     };
 
+    const accountTypeStats = {
+        Business: 0,
+        Normal: 0
+    };
+
+    // WhatsApp Login Device - count occurrences
+    const whatsappLoginDeviceStats = {};
+
     data.forEach((row, index) => {
         // SIM Type - exact column name: "Sim Type"
         const simType = row['Sim Type'];
-        
+
         if (simType) {
-            const simTypeUpper = simType.toUpperCase().trim();
+            const simTypeUpper = simType.trim();
             if (simTypeUpper === 'PREPAID') {
                 simTypeStats.PREPAID++;
             } else if (simTypeUpper === 'POSTPAID') {
                 simTypeStats.POSTPAID++;
+            } else if (simTypeUpper === 'Disposable Number') {
+                simTypeStats.Disposable_numbers++;
             }
         }
 
         // WhatsApp Status - exact column name: "WhatsApp Status"
         const whatsappStatus = row['WhatsApp Status'];
-        
+
         if (whatsappStatus) {
             const statusLower = whatsappStatus.toString().toLowerCase().trim();
             if (statusLower === 'active') {
@@ -721,12 +733,36 @@ function calculateStatistics(data) {
                 whatsappStatusStats.Restricted++;
             }
         }
+
+        const accountType = row['Full Name'];
+
+        if (accountType) {
+            const accountLower = accountType.trim();
+            console.log(accountLower);
+
+            if (accountLower === 'Bussiness Account') {
+                accountTypeStats.Business++;
+            } else {
+                accountTypeStats.Normal++;
+            }
+        }
+
+        // WhatsApp Login Device - count each device
+        const whatsappLoginDevice = row['Whatsapp Login Device'];
+        if (whatsappLoginDevice) {
+            const deviceName = whatsappLoginDevice.trim();
+            if (deviceName !== '') {
+                whatsappLoginDeviceStats[deviceName] = (whatsappLoginDeviceStats[deviceName] || 0) + 1;
+            }
+        }
     });
 
     return {
         totalCount,
         simTypeStats,
-        whatsappStatusStats
+        whatsappStatusStats,
+        accountTypeStats,
+        whatsappLoginDeviceStats
     };
 }
 
@@ -734,16 +770,38 @@ function updateUI(stats) {
     document.getElementById('totalCount').textContent = stats.totalCount.toLocaleString();
     document.getElementById('prepaidCount').textContent = stats.simTypeStats.PREPAID;
     document.getElementById('postpaidCount').textContent = stats.simTypeStats.POSTPAID;
+    document.getElementById('disposable_number').textContent = stats.simTypeStats.Disposable_numbers;
+    document.getElementById('business_acc').textContent = stats.accountTypeStats.Business;
+    document.getElementById('normal_acc').textContent = stats.accountTypeStats.Normal;
     document.getElementById('activeCount').textContent = stats.whatsappStatusStats.Active;
     document.getElementById('blockedCount').textContent = stats.whatsappStatusStats.Blocked;
     document.getElementById('restrictedCount').textContent = stats.whatsappStatusStats.Restricted;
+
+    // Update WhatsApp Login Device section
+    const deviceContainer = document.getElementById('whatsappLoginDeviceContainer');
+    if (deviceContainer && stats.whatsappLoginDeviceStats) {
+        deviceContainer.innerHTML = '';
+
+        // Sort devices by count (highest first)
+        const sortedDevices = Object.entries(stats.whatsappLoginDeviceStats)
+            .sort((a, b) => b[1] - a[1]);
+
+        sortedDevices.forEach(([device, count]) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding-left: 12px;">${device}</td>
+                <td style="text-align: right;">${count}</td>
+            `;
+            deviceContainer.appendChild(row);
+        });
+    }
 }
 
 async function initTrackerPage() {
     try {
         const fetchedData = await loadData();
         const stats = calculateStatistics(fetchedData);
-        
+
         document.getElementById('loading').style.display = 'none';
         document.getElementById('summaryContainer').style.display = 'block';
 
