@@ -184,7 +184,8 @@ async function initUpdateDatePage() {
             const filtered = {
                 id: item.id,
                 Number: item.Number || '',
-                Login_user: item['Login User'] || ''
+                Login_user: item['Login User'] || '',
+                Whatsapp_login: item['Whatsapp Login Device'] || ''
             };
             SHOW_COLUMNS.forEach(col => {
                 filtered[col] = item[col] || '';
