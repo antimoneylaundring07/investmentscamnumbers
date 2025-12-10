@@ -631,3 +631,37 @@ tr.blocked:hover {
         width: 100%;
     }
 }
+
+/* Edit select dropdown styling */
+.edit-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #32a8c6;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.edit-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(50, 168, 198, 0.2);
+}
+
+.edit-select option {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    padding: 8px;
+}
+
+/* Styling for table rows being edited */
+table tr.editing {
+    background-color: rgba(50, 168, 198, 0.05);
+}
+
+table tr.editing td {
+    padding: 8px;
+}

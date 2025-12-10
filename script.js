@@ -21,6 +21,8 @@ const SHOW_COLUMNS = [
 
 const DATE_COLUMNS = ["Blocked Date", "Unblocked Date", "Recharge Date"];
 
+const WHATSAPP_STATUS_OPTIONS = ['Active', 'Blocked', 'Restricted'];
+
 function isDateColumn(col) {
     return DATE_COLUMNS.includes(col);
 }
@@ -303,22 +305,50 @@ function renderUpdateDateTable() {
             const isEditable = isEditing && selectedColumns.includes(col) && col !== "No of Days";
 
             if (isEditable) {
-                const input = document.createElement('input');
-                if (isDateColumn(col)) {
-                    input.type = 'date';
-                    const today = new Date();
-                    const yyyy = today.getFullYear();
-                    const mm = String(today.getMonth() + 1).padStart(2, '0');
-                    const dd = String(today.getDate()).padStart(2, '0');
-                    input.max = `${yyyy}-${mm}-${dd}`;
+                // Special handling for WhatsApp Status - show dropdown
+                if (col === "WhatsApp Status") {
+                    const select = document.createElement('select');
+                    select.className = 'edit-select';
+                    select.setAttribute('data-column', col);
+                    select.setAttribute('data-row-id', row.id);
+
+                    // Add empty option
+                    const emptyOption = document.createElement('option');
+                    emptyOption.value = '';
+                    emptyOption.textContent = '-- Select Status --';
+                    select.appendChild(emptyOption);
+
+                    // Add dropdown options
+                    WHATSAPP_STATUS_OPTIONS.forEach(option => {
+                        const opt = document.createElement('option');
+                        opt.value = option;
+                        opt.textContent = option;
+                        if (row[col] === option) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+
+                    td.appendChild(select);
                 } else {
-                    input.type = 'text';
+                    // Regular text input for other columns
+                    const input = document.createElement('input');
+                    if (isDateColumn(col)) {
+                        input.type = 'date';
+                        const today = new Date();
+                        const yyyy = today.getFullYear();
+                        const mm = String(today.getMonth() + 1).padStart(2, '0');
+                        const dd = String(today.getDate()).padStart(2, '0');
+                        input.max = `${yyyy}-${mm}-${dd}`;
+                    } else {
+                        input.type = 'text';
+                    }
+                    input.className = 'edit-input';
+                    input.value = row[col] || '';
+                    input.setAttribute('data-column', col);
+                    input.setAttribute('data-row-id', row.id);
+                    td.appendChild(input);
                 }
-                input.className = 'edit-input';
-                input.value = row[col] || '';
-                input.setAttribute('data-column', col);
-                input.setAttribute('data-row-id', row.id);
-                td.appendChild(input);
             } else {
                 td.textContent = displayValue;
             }
@@ -356,6 +386,7 @@ function renderUpdateDateTable() {
     });
 }
 
+
 function editRow(rowId) {
     if (selectedColumns.length === 0) {
         showMessage('⚠️ Please select at least one column to edit', 'error');
@@ -372,13 +403,22 @@ function cancelEdit() {
 
 async function updateRow(rowId) {
     const inputs = document.querySelectorAll(`input[data-row-id="${rowId}"]`);
+    const selects = document.querySelectorAll(`select[data-row-id="${rowId}"]`);
     const updatedData = {};
 
+    // Get values from text inputs
     inputs.forEach(input => {
         const colName = input.getAttribute('data-column');
         updatedData[colName] = input.value;
     });
 
+    // Get values from select dropdowns
+    selects.forEach(select => {
+        const colName = select.getAttribute('data-column');
+        updatedData[colName] = select.value;
+    });
+
+    // Auto-calculate days if Blocked Date changes
     if ("Blocked Date" in updatedData) {
         updatedData["No of Days"] = calculateDays(updatedData["Blocked Date"]);
         if (
@@ -395,7 +435,6 @@ async function updateRow(rowId) {
     }
 
     try {
-
         const { data: result, error } = await supabaseClient
             .from(TABLE_NAME)
             .update(updatedData)
@@ -418,6 +457,7 @@ async function updateRow(rowId) {
         showMessage('❌ Update failed: ' + error.message, 'error');
     }
 }
+
 
 // ============================================
 // DASHBOARD PAGE FUNCTIONS
