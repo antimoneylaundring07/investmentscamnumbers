@@ -23,7 +23,7 @@ const SHOW_COLUMNS = [
 
 const DATE_COLUMNS = ["Blocked Date", "Unblocked Date", "Recharge Date"];
 
-const WHATSAPP_STATUS_OPTIONS = ['Active', 'Blocked', 'Restricted'];
+const WHATSAPP_STATUS_OPTIONS = ['Active', 'Blocked', 'Restricted', 'Parmanent'];
 
 function isDateColumn(col) {
     return DATE_COLUMNS.includes(col);
