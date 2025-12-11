@@ -11,6 +11,8 @@ let selectedColumns = [];
 let editingRowId = null;
 
 const SHOW_COLUMNS = [
+    "Login User",
+    "Whatsapp Login Device",
     "WhatsApp Status",
     "Review Status",
     "Blocked Date",
@@ -185,9 +187,7 @@ async function initUpdateDatePage() {
         data = fetchedData.map(item => {
             const filtered = {
                 id: item.id,
-                Number: item.Number || '',
-                Login_user: item['Login User'] || '',
-                Whatsapp_login: item['Whatsapp Login Device'] || ''
+                Number: item.Number || ''
             };
             SHOW_COLUMNS.forEach(col => {
                 filtered[col] = item[col] || '';
