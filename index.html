@@ -17,6 +17,7 @@
             <li><a href="update_data.html">Update Data</a></li>
             <li><a href="tracker.html">Tracker</a></li>
             <li><a href="all_number.html">All Numbers</a></li>
+            <li><a href="#" onclick="logout()" style="color: #dc3545; font-weight: 600;">Logout</a></li>
         </ul>
     </div>
 
@@ -25,6 +26,10 @@
             <h1>Dashboard</h1>
             <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <button class="download-btn" onclick="triggerImport()" style="margin-top: 0px;">📤 Import</button>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="download-header" onclick="downloadHeadersCSV()" style="margin-top: 0px;">⬇️ Downlaod
+                    Header</button>
             </div>
             <input type="file" id="importFile" accept=".csv" style="display:none;" />
         </div>
@@ -41,6 +46,17 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Protect page - redirect to login if not authenticated
+        protectPage();
+
+        // Display current user info (optional)
+        const user = getCurrentUser();
+        if (user) {
+            console.log('Logged in as:', user.email, '| Role:', user.role);
+        }
+    </script>
+
 </body>
 
 </html>

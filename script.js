@@ -857,3 +857,244 @@ async function initTrackerPage() {
 document.addEventListener('DOMContentLoaded', () => {
     initTrackerPage();
 });
+
+function downloadHeadersCSV() {
+    if (!data || data.length === 0) {
+        alert('No data loaded yet');
+        return;
+    }
+
+    const columns = Object.keys(data[0]).filter(col => col !== 'id');
+
+    const csv = columns.join(',') + '\n';
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'headers_only.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+
+function showMessage(text, type) {
+    const messageBox = document.getElementById('messageBox');
+    messageBox.textContent = text;
+    messageBox.className = `message ${type}`;
+    setTimeout(() => {
+        messageBox.className = 'message';
+    }, 4000);
+}
+
+function clearMessage() {
+    document.getElementById('messageBox').className = 'message';
+}
+
+function setButtonLoading(btn, isLoading) {
+    if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span>Loading...';
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = btn.id === 'loginBtn' ? 'Sign In' : 'Create Account';
+    }
+}
+
+function toggleForms() {
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const toggleToLogin = document.getElementById('toggleToLogin');
+    const toggleToSignup = document.querySelector('.toggle-form:not(#toggleToLogin)');
+
+    loginForm.classList.toggle('hidden');
+    signupForm.classList.toggle('hidden');
+    toggleToLogin.classList.toggle('hidden');
+    toggleToSignup.classList.toggle('hidden');
+
+    clearMessage();
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+
+    if (!email || !password) {
+        showMessage('Please fill in all fields', 'error');
+        return;
+    }
+
+    setButtonLoading(btn, true);
+
+    try {
+        // Query login table for user with matching email
+        const { data: users, error: queryError } = await supabaseClient
+            .from('login')
+            .select('*')
+            .eq('email', email);
+
+        if (queryError) {
+            console.error('Query error:', queryError);
+            showMessage('Login failed: ' + queryError.message, 'error');
+            setButtonLoading(btn, false);
+            return;
+        }
+
+        if (!users || users.length === 0) {
+            showMessage('Invalid email or password', 'error');
+            setButtonLoading(btn, false);
+            return;
+        }
+
+        const user = users[0];
+
+        // Compare passwords (plain text comparison)
+        // TODO: In production, implement bcrypt password hashing
+        if (user.password !== password) {
+            showMessage('Invalid email or password', 'error');
+            setButtonLoading(btn, false);
+            return;
+        }
+
+        // Store user info in sessionStorage
+        sessionStorage.setItem('currentUser', JSON.stringify({
+            email: user.email,
+            role: user.role,
+            loginTime: new Date().toISOString()
+        }));
+
+        showMessage('Login successful! Redirecting...', 'success');
+
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1500);
+
+    } catch (error) {
+        console.error('Login error:', error);
+        showMessage('Error: ' + error.message, 'error');
+        setButtonLoading(btn, false);
+    }
+});
+
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const confirm = document.getElementById('signupConfirm').value;
+    const btn = document.getElementById('signupBtn');
+
+    // Validation
+    if (!name || !email || !password || !confirm) {
+        showMessage('Please fill in all fields', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        showMessage('Password must be at least 6 characters', 'error');
+        return;
+    }
+
+    if (password !== confirm) {
+        showMessage('Passwords do not match', 'error');
+        return;
+    }
+
+    setButtonLoading(btn, true);
+
+    try {
+        // Check if email already exists
+        const { data: existingUsers, error: checkError } = await supabaseClient
+            .from('login')
+            .select('email')
+            .eq('email', email);
+
+        if (checkError) {
+            console.error('Check error:', checkError);
+            showMessage('Signup failed: ' + checkError.message, 'error');
+            setButtonLoading(btn, false);
+            return;
+        }
+
+        if (existingUsers && existingUsers.length > 0) {
+            showMessage('Email already registered. Please login or use a different email.', 'error');
+            setButtonLoading(btn, false);
+            return;
+        }
+
+        // Insert new user into login table with default 'user' role
+        const { data: newUser, error: insertError } = await supabaseClient
+            .from('login')
+            .insert([
+                {
+                    email,
+                    password,
+                    role: 'user'
+                }
+            ])
+            .select();
+
+        if (insertError) {
+            console.error('Insert error:', insertError);
+            showMessage('Signup failed: ' + insertError.message, 'error');
+            setButtonLoading(btn, false);
+            return;
+        }
+
+        showMessage('Account created successfully! Redirecting to login...', 'success');
+
+        setTimeout(() => {
+            document.getElementById('signupForm').reset();
+            toggleForms();
+            setButtonLoading(btn, false);
+            document.getElementById('loginEmail').value = email;
+        }, 1500);
+
+    } catch (error) {
+        console.error('Signup error:', error);
+        showMessage('Error: ' + error.message, 'error');
+        setButtonLoading(btn, false);
+    }
+});
+
+// Check if user is already logged in on page load
+window.addEventListener('load', () => {
+    const currentUser = sessionStorage.getItem('currentUser');
+    if (currentUser) {
+        console.log('User already logged in, redirecting...');
+        window.location.href = 'index.html';
+    }
+});
+
+function logout() {
+    sessionStorage.removeItem('currentUser');
+    window.location.href = 'login.html';
+}
+
+function isLoggedIn() {
+    return sessionStorage.getItem('currentUser') !== null;
+}
+
+function getCurrentUser() {
+    const user = sessionStorage.getItem('currentUser');
+    return user ? JSON.parse(user) : null;
+}
+
+function hasRole(requiredRole) {
+    const user = getCurrentUser();
+    return user && user.role === requiredRole;
+}
+
+function protectPage() {
+    if (!isLoggedIn()) {
+        window.location.href = 'login.html';
+    }
+}
+
+console.log('Login script loaded successfully');
+
+
