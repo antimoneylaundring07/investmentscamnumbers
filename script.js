@@ -1,6 +1,8 @@
 const SUPABASE_URL = 'https://onktkbnsvrjotxfdqpai.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ua3RrYm5zdnJqb3R4ZmRxcGFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxOTQyMjQsImV4cCI6MjA3ODc3MDIyNH0.-5k7sgBW42BaY1-7aep6P1BeWZT6XBXq5GbCrK8bWek';
 const TABLE_NAME = 'numbers';
+const all_number_table = 'all_numbers';
+
 
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -775,7 +777,7 @@ function calculateStatistics(data) {
             }
         }
 
-        const accountType = row['Full Name'];
+        const accountType = row['WA Acc Type'];
 
         if (accountType) {
             const accountLower = accountType.trim();
