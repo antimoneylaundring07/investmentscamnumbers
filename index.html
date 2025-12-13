@@ -46,7 +46,7 @@
     </div>
 
     <script src="script.js"></script>
-    <script>
+    <!-- <script>
         // Protect page - redirect to login if not authenticated
         protectPage();
 
@@ -55,6 +55,33 @@
         if (user) {
             console.log('Logged in as:', user.email, '| Role:', user.role);
         }
+    </script> -->
+    <script>
+        // Inline protection - runs immediately
+        function checkAuth() {
+            const user = sessionStorage.getItem('currentUser');
+            if (!user) {
+                window.location.href = 'login.html';
+            }
+            return user ? JSON.parse(user) : null;
+        }
+
+        // Check auth before page loads
+        const currentUser = checkAuth();
+
+        // Logout function
+        function logout() {
+            sessionStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+
+        // Display user email
+        window.addEventListener('load', () => {
+            const userEmailEl = document.getElementById('userEmail');
+            if (userEmailEl && currentUser) {
+                userEmailEl.textContent = `👤 ${currentUser.email}`;
+            }
+        });
     </script>
 
 </body>
