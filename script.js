@@ -18,9 +18,7 @@ const SHOW_COLUMNS = [
     "WhatsApp Status",
     "Review Status",
     "Blocked Date",
-    "No of Days",
-    "Unblocked Date",
-    "Recharge Date"
+    "Unblocked Date"
 ];
 
 const DATE_COLUMNS = ["Blocked Date", "Unblocked Date", "Recharge Date"];
@@ -754,9 +752,9 @@ function calculateStatistics(data) {
 
         if (simType) {
             const simTypeUpper = simType.trim();
-            if (simTypeUpper === 'PREPAID') {
+            if (simTypeUpper === 'Prepaid') {
                 simTypeStats.PREPAID++;
-            } else if (simTypeUpper === 'POSTPAID') {
+            } else if (simTypeUpper === 'Postpaid') {
                 simTypeStats.POSTPAID++;
             } else if (simTypeUpper === 'Disposable Number') {
                 simTypeStats.Disposable_numbers++;
