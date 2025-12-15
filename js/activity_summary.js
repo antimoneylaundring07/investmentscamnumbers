@@ -1,18 +1,8 @@
 // Dashboard page functionality - statistics and table rendering
-const SHOW_COLUMNS = [
-    "Login User",
-    "Whatsapp Login Device",
-    "WhatsApp Status",
-    "Review Status",
-    "Blocked Date",
-    "Unblocked Date"
-];
-
-const DATE_COLUMNS = ["Blocked Date", "Unblocked Date", "Recharge Date"];
-const WHATSAPP_STATUS_OPTIONS = ['Active', 'Blocked', 'Restricted', 'Parmanent'];
 
 let data = [];
 let filteredData = [];
+let isFiltering = false;
 
 function createSearchBoxDashboard() {
     const header = document.querySelector('.header');
@@ -50,10 +40,15 @@ function createSearchBoxDashboard() {
 
 function filterTableDashboard(searchTerm) {
     const searchLower = searchTerm.toLowerCase();
+    
+    // Set isFiltering flag
+    isFiltering = searchTerm.trim() !== '';
 
-    if (!searchTerm || searchTerm.trim() === '') {
-        filteredData = [...data];
+    if (!isFiltering) {
+        // No search term - don't filter
+        filteredData = [];
     } else {
+        // Has search term - filter the data
         filteredData = data.filter(row => {
             return Object.values(row).some(value =>
                 String(value || '').toLowerCase().includes(searchLower)
@@ -65,13 +60,23 @@ function filterTableDashboard(searchTerm) {
 }
 
 function renderDashboardTable() {
-    const displayData = filteredData.length > 0 && filteredData.length < data.length
-        ? filteredData
-        : data;
+    // Decide what to display based on filtering state
+    let displayData;
+    if (isFiltering) {
+        // User is searching - show filtered results (may be empty)
+        displayData = filteredData;
+    } else {
+        // No search active - show all data
+        displayData = data;
+    }
 
-    if (displayData.length === 0) {
-        const tbody = document.getElementById('tableBody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
+    const tbody = document.getElementById('tableBody');
+
+    // Check if no results
+    if (!displayData || displayData.length === 0) {
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
+        }
         return;
     }
 
@@ -82,7 +87,6 @@ function renderDashboardTable() {
         columns.map(col => '<th>' + col + '</th>').join('') +
         '<th>Actions</th></tr>';
 
-    const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
 
     displayData.forEach(row => {
@@ -136,7 +140,8 @@ async function initDashboardPage() {
     try {
         const fetchedData = await loadData();
         data = fetchedData;
-        filteredData = [...data];
+        filteredData = [];
+        isFiltering = false;
         
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dataTable').style.display = 'table';

@@ -1,11 +1,3 @@
-// update_data.js
-// Update page functionality - editing and updating records
-
-let data = [];
-let filteredData = [];
-let selectedColumns = [];
-let editingRowId = null;
-
 const SHOW_COLUMNS = [
     "Login User",
     "Whatsapp Login Device",
@@ -17,6 +9,75 @@ const SHOW_COLUMNS = [
 
 const DATE_COLUMNS = ["Blocked Date", "Unblocked Date", "Recharge Date"];
 const WHATSAPP_STATUS_OPTIONS = ['Active', 'Blocked', 'Restricted', 'Parmanent'];
+
+let data = [];
+let filteredData = [];
+let selectedColumns = [];
+let editingRowId = null;
+let isFiltering = false;
+
+// ============================================
+// SEARCH & FILTER FUNCTIONS - DASHBOARD PAGE
+// ============================================
+
+function createSearchBoxDashboard() {
+    const header = document.querySelector('.header');
+    if (!header) return;
+
+    const searchContainer = document.createElement('div');
+    searchContainer.style.display = 'flex';
+    searchContainer.style.alignItems = 'center';
+    searchContainer.style.gap = '10px';
+    searchContainer.style.justifyContent = 'flex-end';
+
+    searchContainer.innerHTML = `
+        <label for="searchInputDash" style="font-weight: 600; color: #333; font-size: 14px; white-space: nowrap;">
+            🔍 Search:
+        </label>
+        <input 
+            type="text" 
+            id="searchInputDash" 
+            placeholder="Search by name, number, status..."
+            style="
+                width: 300px;
+                padding: 8px 12px;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                font-size: 14px;
+            "
+        />
+    `;
+    header.appendChild(searchContainer);
+
+    document.getElementById('searchInputDash').addEventListener('input', (e) => {
+        filterTableDashboard(e.target.value);
+    });
+}
+
+function filterTableDashboard(searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+
+    // Set isFiltering flag
+    isFiltering = searchTerm.trim() !== '';
+
+    if (!isFiltering) {
+        // No search term - don't filter
+        filteredData = [];
+    } else {
+        // Has search term - filter the data
+        filteredData = data.filter(row => {
+            return Object.values(row).some(value =>
+                String(value || '').toLowerCase().includes(searchLower)
+            );
+        });
+    }
+
+    renderDashboardTable();
+}
+
+// ============================================
+// SEARCH & FILTER FUNCTIONS - UPDATE DATA PAGE
+// ============================================
 
 function createSearchBox() {
     const controlsSection = document.querySelector('.header');
@@ -55,9 +116,14 @@ function createSearchBox() {
 function filterTable(searchTerm) {
     const searchLower = searchTerm.toLowerCase();
 
-    if (!searchTerm || searchTerm.trim() === '') {
-        filteredData = [...data];
+    // Set isFiltering flag
+    isFiltering = searchTerm.trim() !== '';
+
+    if (!isFiltering) {
+        // No search term - don't filter
+        filteredData = [];
     } else {
+        // Has search term - filter the data
         filteredData = data.filter(row => {
             return Object.values(row).some(value =>
                 String(value || '').toLowerCase().includes(searchLower)
@@ -67,6 +133,10 @@ function filterTable(searchTerm) {
 
     renderUpdateDateTable();
 }
+
+// ============================================
+// COLUMN SELECTOR - UPDATE DATA PAGE
+// ============================================
 
 function createColumnSelector() {
     const selector = document.getElementById('columnSelector');
@@ -124,14 +194,28 @@ function updateSelectedCount() {
     countEl.style.display = count > 0 ? 'inline-block' : 'none';
 }
 
-function renderUpdateDateTable() {
-    const displayData = filteredData.length > 0 && filteredData.length < data.length
-        ? filteredData
-        : data;
+// ============================================
+// TABLE RENDERING - DASHBOARD PAGE
+// ============================================
 
-    if (displayData.length === 0) {
-        const tbody = document.getElementById('tableBody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
+function renderDashboardTable() {
+    // Decide what to display based on filtering state
+    let displayData;
+    if (isFiltering) {
+        // User is searching - show filtered results (may be empty)
+        displayData = filteredData;
+    } else {
+        // No search active - show all data
+        displayData = data;
+    }
+
+    const tbody = document.getElementById('tableBody');
+
+    // Check if no results
+    if (!displayData || displayData.length === 0) {
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
+        }
         return;
     }
 
@@ -142,7 +226,70 @@ function renderUpdateDateTable() {
         columns.map(col => '<th>' + col + '</th>').join('') +
         '<th>Actions</th></tr>';
 
+    tbody.innerHTML = '';
+
+    displayData.forEach(row => {
+        const tr = document.createElement('tr');
+
+        const whatsappStatus = row['WhatsApp Status'] || row['whatsapp_status'] || '';
+        if (whatsappStatus.toString().toLowerCase().trim() === 'blocked') {
+            tr.className = 'blocked';
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'active') {
+            tr.className = 'active';
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'restricted') {
+            tr.className = 'restricted';
+        }
+
+        columns.forEach(col => {
+            const td = document.createElement('td');
+            td.textContent = row[col] || '';
+            tr.appendChild(td);
+        });
+
+        const deleteTd = document.createElement('td');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'btn btn-cancel';
+        deleteBtn.onclick = () => deleteRowFromDashboard(row.id, tr, deleteBtn);
+        deleteTd.appendChild(deleteBtn);
+        tr.appendChild(deleteTd);
+
+        tbody.appendChild(tr);
+    });
+}
+
+// ============================================
+// TABLE RENDERING - UPDATE DATA PAGE
+// ============================================
+
+function renderUpdateDateTable() {
+    // Decide what to display based on filtering state
+    let displayData;
+    if (isFiltering) {
+        // User is searching - show filtered results (may be empty)
+        displayData = filteredData;
+    } else {
+        // No search active - show all data
+        displayData = data;
+    }
+
     const tbody = document.getElementById('tableBody');
+
+    // Check if no results
+    if (!displayData || displayData.length === 0) {
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
+        }
+        return;
+    }
+
+    const columns = Object.keys(displayData[0]);
+
+    const header = document.getElementById('tableHeader');
+    header.innerHTML = '<tr>' +
+        columns.map(col => '<th>' + col + '</th>').join('') +
+        '<th>Actions</th></tr>';
+
     tbody.innerHTML = '';
 
     displayData.forEach(row => {
@@ -239,6 +386,10 @@ function renderUpdateDateTable() {
     });
 }
 
+// ============================================
+// EDIT & UPDATE FUNCTIONS
+// ============================================
+
 function editRow(rowId) {
     if (selectedColumns.length === 0) {
         showMessage('⚠️ Please select at least one column to edit', 'error');
@@ -258,16 +409,19 @@ async function updateRow(rowId) {
     const selects = document.querySelectorAll(`select[data-row-id="${rowId}"]`);
     const updatedData = {};
 
+    // Get values from text inputs
     inputs.forEach(input => {
         const colName = input.getAttribute('data-column');
         updatedData[colName] = input.value;
     });
 
+    // Get values from select dropdowns
     selects.forEach(select => {
         const colName = select.getAttribute('data-column');
         updatedData[colName] = select.value;
     });
 
+    // Auto-calculate days if Blocked Date changes
     if ("Blocked Date" in updatedData) {
         updatedData["No of Days"] = calculateDays(updatedData["Blocked Date"]);
         if (updatedData["Blocked Date"] && updatedData["Blocked Date"] !== "NA") {
@@ -281,6 +435,12 @@ async function updateRow(rowId) {
     }
 
     try {
+        // ✅ NEW: Log each change to activity_log table
+        for (const [columnName, newValue] of Object.entries(updatedData)) {
+            await logActivityChange(columnName, newValue, rowId);
+        }
+
+        // Update the database
         await updateRowInDB(rowId, updatedData);
 
         const rowIndex = data.findIndex(r => r.id === rowId);
@@ -300,6 +460,50 @@ async function updateRow(rowId) {
     }
 }
 
+// ============================================
+// DELETE FUNCTIONS
+// ============================================
+
+async function deleteRowFromDashboard(rowId, rowElem, btnElem) {
+    if (!confirm('Really delete this row?')) return;
+    btnElem.disabled = true;
+    btnElem.textContent = 'Deleting...';
+    try {
+        await deleteRowFromDB(rowId);
+        showMessage('✅ Row deleted', 'success');
+        data = data.filter(r => r.id !== rowId);
+        filteredData = filteredData.filter(r => r.id !== rowId);
+        renderDashboardTable();
+    } catch (e) {
+        showMessage('❌ Delete error: ' + e.message, 'error');
+        btnElem.disabled = false;
+        btnElem.textContent = 'Delete';
+    }
+}
+
+// ============================================
+// PAGE INITIALIZATION FUNCTIONS
+// ============================================
+
+async function initDashboardPage() {
+    try {
+        const fetchedData = await loadData();
+        data = fetchedData;
+        filteredData = [];
+        isFiltering = false;
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dataTable').style.display = 'table';
+
+        createSearchBoxDashboard();
+        renderDashboardTable();
+    } catch (error) {
+        document.getElementById('loading').innerHTML =
+            `<div style="color: red;">❌ Error loading data: ${error.message}<br><br>
+            Check console for details.</div>`;
+    }
+}
+
 async function initUpdateDatePage() {
     try {
         const fetchedData = await loadData();
@@ -315,7 +519,8 @@ async function initUpdateDatePage() {
             return filtered;
         });
 
-        filteredData = [...data];
+        filteredData = [];
+        isFiltering = false;
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dataTable').style.display = 'table';
 
@@ -331,4 +536,4 @@ async function initUpdateDatePage() {
     }
 }
 
-console.log('Update Data script loaded successfully');
+console.log('Activity Summary script loaded successfully');
