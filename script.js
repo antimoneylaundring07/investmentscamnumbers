@@ -3,7 +3,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const TABLE_NAME = 'numbers';
 const all_number_table = 'all_numbers';
 
-
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -449,9 +448,15 @@ async function updateRow(rowId) {
         const rowIndex = data.findIndex(r => r.id === rowId);
         data[rowIndex] = { ...data[rowIndex], ...updatedData };
 
+        alert('✅ Updated successfully!');
         showMessage('✅ Updated successfully!', 'success');
         editingRowId = null;
         renderUpdateDateTable();
+
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+        
     } catch (error) {
         console.error('❌ Error:', error);
         showMessage('❌ Update failed: ' + error.message, 'error');
@@ -779,7 +784,7 @@ function calculateStatistics(data) {
 
         if (accountType) {
             const accountLower = accountType.trim();
-            console.log(accountLower);
+            // console.log(accountLower);
 
             if (accountLower === 'Bussiness Account') {
                 accountTypeStats.Business++;
@@ -853,10 +858,6 @@ async function initTrackerPage() {
             Check console for details.</div>`;
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    initTrackerPage();
-});
 
 function downloadHeadersCSV() {
     if (!data || data.length === 0) {
@@ -979,87 +980,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
 });
 
-document.getElementById('signupForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const name = document.getElementById('signupName').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const confirm = document.getElementById('signupConfirm').value;
-    const btn = document.getElementById('signupBtn');
-
-    // Validation
-    if (!name || !email || !password || !confirm) {
-        showMessage('Please fill in all fields', 'error');
-        return;
-    }
-
-    if (password.length < 6) {
-        showMessage('Password must be at least 6 characters', 'error');
-        return;
-    }
-
-    if (password !== confirm) {
-        showMessage('Passwords do not match', 'error');
-        return;
-    }
-
-    setButtonLoading(btn, true);
-
-    try {
-        // Check if email already exists
-        const { data: existingUsers, error: checkError } = await supabaseClient
-            .from('login')
-            .select('email')
-            .eq('email', email);
-
-        if (checkError) {
-            console.error('Check error:', checkError);
-            showMessage('Signup failed: ' + checkError.message, 'error');
-            setButtonLoading(btn, false);
-            return;
-        }
-
-        if (existingUsers && existingUsers.length > 0) {
-            showMessage('Email already registered. Please login or use a different email.', 'error');
-            setButtonLoading(btn, false);
-            return;
-        }
-
-        // Insert new user into login table with default 'user' role
-        const { data: newUser, error: insertError } = await supabaseClient
-            .from('login')
-            .insert([
-                {
-                    email,
-                    password,
-                    role: 'user'
-                }
-            ])
-            .select();
-
-        if (insertError) {
-            console.error('Insert error:', insertError);
-            showMessage('Signup failed: ' + insertError.message, 'error');
-            setButtonLoading(btn, false);
-            return;
-        }
-
-        showMessage('Account created successfully! Redirecting to login...', 'success');
-
-        setTimeout(() => {
-            document.getElementById('signupForm').reset();
-            toggleForms();
-            setButtonLoading(btn, false);
-            document.getElementById('loginEmail').value = email;
-        }, 1500);
-
-    } catch (error) {
-        console.error('Signup error:', error);
-        showMessage('Error: ' + error.message, 'error');
-        setButtonLoading(btn, false);
-    }
-});
 
 // Check if user is already logged in on page load
 window.addEventListener('load', () => {
@@ -1097,4 +1017,6 @@ function protectPage() {
 
 console.log('Login script loaded successfully');
 
-
+document.addEventListener('DOMContentLoaded', () => {
+    initTrackerPage();
+});

@@ -17,6 +17,8 @@
             <li><a href="update_data.html">Update Data</a></li>
             <li><a href="tracker.html">Tracker</a></li>
             <li><a href="all_number.html" class="active">All Numbers</a></li>
+            <li><a href="activity_summary.html">Activity Summary</a></li>
+
             <li><a href="#" onclick="logout()" style="color: #dc3545; font-weight: 600;">Logout</a></li>
         </ul>
     </div>
@@ -44,8 +46,15 @@
         <button class="download-btn" onclick="downloadCSV()">📥 Download All Data (CSV)</button>
     </div>
 
-    <script src="script.js"></script>
-    <script>
+    <!-- <script src="script.js"></script> -->
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/activity_summary.js"></script>
+    <script src="js/import.js"></script>
+    <script src="js/router.js"></script>
+    <!-- <script>
         // Protect page - redirect to login if not authenticated
         protectPage();
 
@@ -54,7 +63,7 @@
         if (user) {
             console.log('Logged in as:', user.email, '| Role:', user.role);
         }
-    </script>
+    </script> -->
 </body>
 
 </html>
