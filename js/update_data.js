@@ -8,7 +8,7 @@ const SHOW_COLUMNS = [
 ];
 
 const DATE_COLUMNS = ["Blocked Date", "Unblocked Date", "Recharge Date"];
-const WHATSAPP_STATUS_OPTIONS = ['Active', 'Blocked', 'Restricted', 'Parmanent'];
+const WHATSAPP_STATUS_OPTIONS = ['Active', 'Blocked', 'Restricted', 'Permanent'];
 
 let data = [];
 let filteredData = [];
@@ -198,20 +198,79 @@ function updateSelectedCount() {
 // TABLE RENDERING - DASHBOARD PAGE
 // ============================================
 
+// function renderDashboardTable() {
+//     // Decide what to display based on filtering state
+//     let displayData;
+//     if (isFiltering) {
+//         // User is searching - show filtered results (may be empty)
+//         displayData = filteredData;
+//     } else {
+//         // No search active - show all data
+//         displayData = data;
+//     }
+
+//     const tbody = document.getElementById('tableBody');
+
+//     // Check if no results
+//     if (!displayData || displayData.length === 0) {
+//         if (tbody) {
+//             tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
+//         }
+//         return;
+//     }
+
+//     const columns = Object.keys(displayData[0]);
+
+//     const header = document.getElementById('tableHeader');
+//     header.innerHTML = '<tr>' +
+//         columns.map(col => '<th>' + col + '</th>').join('') +
+//         '<th>Actions</th></tr>';
+
+//     tbody.innerHTML = '';
+
+//     displayData.forEach(row => {
+//         const tr = document.createElement('tr');
+
+//         const whatsappStatus = row['WhatsApp Status'] || row['whatsapp_status'] || '';
+//         if (whatsappStatus.toString().toLowerCase().trim() === 'blocked') {
+//             tr.className = 'blocked';
+//         } else if (whatsappStatus.toString().toLowerCase().trim() === 'active') {
+//             tr.className = 'active';
+//         } else if (whatsappStatus.toString().toLowerCase().trim() === 'restricted') {
+//             tr.className = 'restricted';
+//         }
+
+//         columns.forEach(col => {
+//             const td = document.createElement('td');
+//             td.textContent = row[col] || '';
+//             tr.appendChild(td);
+//         });
+
+//         const deleteTd = document.createElement('td');
+//         const deleteBtn = document.createElement('button');
+//         deleteBtn.textContent = 'Delete';
+//         deleteBtn.className = 'btn btn-cancel';
+//         deleteBtn.onclick = () => deleteRowFromDashboard(row.id, tr, deleteBtn);
+//         deleteTd.appendChild(deleteBtn);
+//         tr.appendChild(deleteTd);
+
+//         tbody.appendChild(tr);
+//     });
+// }
+
+let selectedRows = new Set();
+
+// Override renderDashboardTable to add checkboxes (NO delete button in rows)
 function renderDashboardTable() {
-    // Decide what to display based on filtering state
     let displayData;
     if (isFiltering) {
-        // User is searching - show filtered results (may be empty)
         displayData = filteredData;
     } else {
-        // No search active - show all data
         displayData = data;
     }
 
     const tbody = document.getElementById('tableBody');
 
-    // Check if no results
     if (!displayData || displayData.length === 0) {
         if (tbody) {
             tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
@@ -222,9 +281,12 @@ function renderDashboardTable() {
     const columns = Object.keys(displayData[0]);
 
     const header = document.getElementById('tableHeader');
+
+    // Add checkbox column header
     header.innerHTML = '<tr>' +
+        '<th class="checkbox-cell"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"></th>' +
         columns.map(col => '<th>' + col + '</th>').join('') +
-        '<th>Actions</th></tr>';
+        '</tr>';
 
     tbody.innerHTML = '';
 
@@ -240,22 +302,90 @@ function renderDashboardTable() {
             tr.className = 'restricted';
         }
 
+        // Add checkbox cell
+        const checkboxTd = document.createElement('td');
+        checkboxTd.className = 'checkbox-cell';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'row-checkbox';
+        checkbox.setAttribute('data-row-id', row.id);
+        checkbox.onchange = () => {
+            if (checkbox.checked) {
+                selectedRows.add(row.id);
+            } else {
+                selectedRows.delete(row.id);
+            }
+            updateDeleteButton();
+        };
+        checkboxTd.appendChild(checkbox);
+        tr.appendChild(checkboxTd);
+
+        // Add data columns
         columns.forEach(col => {
             const td = document.createElement('td');
             td.textContent = row[col] || '';
             tr.appendChild(td);
         });
 
-        const deleteTd = document.createElement('td');
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.className = 'btn btn-cancel';
-        deleteBtn.onclick = () => deleteRowFromDashboard(row.id, tr, deleteBtn);
-        deleteTd.appendChild(deleteBtn);
-        tr.appendChild(deleteTd);
-
         tbody.appendChild(tr);
     });
+}
+
+function toggleSelectAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    selectedRows.clear();
+
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+        if (checkbox.checked) {
+            selectedRows.add(parseInt(cb.getAttribute('data-row-id')));
+        }
+    });
+
+    updateDeleteButton();
+}
+
+function updateDeleteButton() {
+    const deleteBtn = document.getElementById('deleteBulkBtn');
+    deleteBtn.textContent = `🗑️ Delete Selected (${selectedRows.size})`;
+    deleteBtn.disabled = selectedRows.size === 0;
+}
+
+async function bulkDeleteSelected() {
+    if (selectedRows.size === 0) {
+        alert('⚠️ Please select rows to delete');
+        return;
+    }
+
+    const count = selectedRows.size;
+    const confirmDelete = confirm(`🗑️ Delete ${count} row(s)? This action cannot be undone!`);
+
+    if (!confirmDelete) return;
+
+    const deleteBtn = document.getElementById('deleteBulkBtn');
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = '⏳ Deleting...';
+
+    try {
+        for (const rowId of selectedRows) {
+            await deleteRowFromDB(rowId);
+            data = data.filter(r => r.id !== rowId);
+            filteredData = filteredData.filter(r => r.id !== rowId);
+        }
+
+        alert(`✅ Successfully deleted ${count} row(s)!`);
+        selectedRows.clear();
+        updateDeleteButton();
+        document.getElementById('selectAllCheckbox').checked = false;
+        renderDashboardTable();
+
+    } catch (error) {
+        alert(`❌ Error: ${error.message}`);
+        console.error('Delete error:', error);
+    } finally {
+        deleteBtn.disabled = false;
+        updateDeleteButton();
+    }
 }
 
 // ============================================

@@ -7,6 +7,20 @@
     <title>Dashboard - View All</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Table checkbox styling */
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+
+        .checkbox-cell input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #007bff;
+        }
+    </style>
 </head>
 
 <body>
@@ -34,7 +48,13 @@
             </div>
             <input type="file" id="importFile" accept=".csv" style="display:none;" />
         </div>
-
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="download-btn" id="deleteBulkBtn" onclick="bulkDeleteSelected()"
+                style="background-color: #dc3545;">
+                🗑️ Delete Selected
+            </button>
+            <button class="download-btn" onclick="downloadCSV(data)">📥 Download All Data (CSV)</button>
+        </div>
         <div class="table-container">
             <div id="loading" class="loading">Loading data...</div>
             <table id="dataTable" style="display:none;">
@@ -43,43 +63,13 @@
             </table>
         </div>
 
-        <button class="download-btn" onclick="downloadCSV(data)">📥 Download All Data (CSV)</button>
     </div>
 
-    <!-- <script src="script.js"></script> -->
-    <!-- <script>
-        // Inline protection - runs immediately
-        function checkAuth() {
-            const user = sessionStorage.getItem('currentUser');
-            if (!user) {
-                window.location.href = 'login.html';
-            }
-            return user ? JSON.parse(user) : null;
-        }
-
-        // Check auth before page loads
-        const currentUser = checkAuth();
-
-        // Logout function
-        function logout() {
-            sessionStorage.removeItem('currentUser');
-            window.location.href = 'login.html';
-        }
-
-        // Display user email
-        window.addEventListener('load', () => {
-            const userEmailEl = document.getElementById('userEmail');
-            if (userEmailEl && currentUser) {
-                userEmailEl.textContent = `👤 ${currentUser.email}`;
-            }
-        });
-    </script> -->
     <script src="js/supabaseClient.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/database.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/update_data.js"></script>
-    <!-- <script src="js/activity_summary.js"></script> -->
     <script src="js/import.js"></script>
     <script src="js/router.js"></script>
 

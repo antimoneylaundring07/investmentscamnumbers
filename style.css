@@ -307,7 +307,7 @@ tr.blocked:hover {
 }
 
 .download-btn {
-    margin-top: 20px;
+    /* margin-top: 20px; */
     padding: 10px 12px;
     background: #0066cc;
     color: white;
