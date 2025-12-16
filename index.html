@@ -48,12 +48,12 @@
             </div>
             <input type="file" id="importFile" accept=".csv" style="display:none;" />
         </div>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <div style="display: flex; gap: 10px;">
             <button class="download-btn" id="deleteBulkBtn" onclick="bulkDeleteSelected()"
                 style="background-color: #dc3545;">
-                🗑️ Delete Selected
+                🗑️ Delete
             </button>
-            <button class="download-btn" onclick="downloadCSV(data)">📥 Download All Data (CSV)</button>
+            <button class="download-btn" onclick="downloadCSV(data)">📥 Export</button>
         </div>
         <div class="table-container">
             <div id="loading" class="loading">Loading data...</div>
