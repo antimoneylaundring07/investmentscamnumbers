@@ -12,6 +12,8 @@ function getPageType() {
         return 'tracker';
     } else if (currentPage === 'all_numbers.html') {
         return 'all_numbers';
+    } else if (currentPage === 'permanent_blocked.html') {
+        return 'permanent_blocked';
     }
     return 'unknown';
 }

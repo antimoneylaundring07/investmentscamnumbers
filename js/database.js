@@ -1,8 +1,28 @@
+
 // Database operations and CRUD functions
 async function loadData() {
     try {
         const { data: fetchedData, error } = await supabaseClient
             .from(TABLE_NAME)
+            .select('*');
+
+        if (error) {
+            console.error('❌ Supabase error:', error);
+            throw error;
+        }
+
+        console.log('✅ Data fetched:', fetchedData);
+        return fetchedData;
+    } catch (error) {
+        console.error('❌ Error:', error);
+        throw error;
+    }
+}
+
+async function blockedData() {
+    try {
+        const { data: fetchedData, error } = await supabaseClient
+            .from(BLOCKED_NUMBERS_TABLE)
             .select('*');
 
         if (error) {

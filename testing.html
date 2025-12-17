@@ -1,0 +1,247 @@
+// Get Supabase client
+const { createClient } = window.supabase;
+const supabaseUrl = 'YOUR_SUPABASE_URL';
+const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+let data = [];
+let filteredData = [];
+let isFiltering = false;
+let selectedRows = new Set();
+
+// Fetch permanent blocked numbers from Supabase
+async function blockedData() {
+    try {
+        const { data: fetchedData, error } = await supabase
+            .from('permanent_blocked_numbers')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Transform data to match expected format
+        return fetchedData.map(row => ({
+            id: row.id,
+            'Phone Number': row.phone_number,
+            'Reason': row.reason || 'N/A',
+            'Blocked Date': new Date(row.created_at).toLocaleDateString(),
+            'Blocked By': row.blocked_by || 'System',
+            'Status': 'Permanent',
+            'WhatsApp Status': 'blocked'
+        })) || [];
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        throw error;
+    }
+}
+
+function renderDashboardTable() {
+    let displayData;
+    if (isFiltering) {
+        displayData = filteredData;
+    } else {
+        displayData = data;
+    }
+
+    const tbody = document.getElementById('tableBody');
+
+    if (!displayData || displayData.length === 0) {
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
+        }
+        return;
+    }
+
+    const columns = Object.keys(displayData[0]);
+
+    const header = document.getElementById('tableHeader');
+
+    // Add checkbox column header
+    header.innerHTML = '<tr>' +
+        '<th class="checkbox-cell"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"></th>' +
+        columns.map(col => '<th>' + col + '</th>').join('') +
+        '<th>Actions</th>' +
+        '</tr>';
+
+    tbody.innerHTML = '';
+
+    displayData.forEach(row => {
+        const tr = document.createElement('tr');
+
+        const whatsappStatus = row['WhatsApp Status'] || row['whatsapp_status'] || '';
+        if (whatsappStatus.toString().toLowerCase().trim() === 'blocked') {
+            tr.className = 'blocked';
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'active') {
+            tr.className = 'active';
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'restricted') {
+            tr.className = 'restricted';
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'permanent') {
+            tr.className = 'permanent';
+        }
+
+        // Add checkbox cell
+        const checkboxTd = document.createElement('td');
+        checkboxTd.className = 'checkbox-cell';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'row-checkbox';
+        checkbox.setAttribute('data-row-id', row.id);
+        checkbox.onchange = () => {
+            if (checkbox.checked) {
+                selectedRows.add(row.id);
+            } else {
+                selectedRows.delete(row.id);
+            }
+            updateDeleteButton();
+        };
+        checkboxTd.appendChild(checkbox);
+        tr.appendChild(checkboxTd);
+
+        // Add data columns
+        columns.forEach(col => {
+            const td = document.createElement('td');
+            td.textContent = row[col] || '';
+            tr.appendChild(td);
+        });
+
+        // Add action buttons
+        const actionTd = document.createElement('td');
+        actionTd.innerHTML = `
+            <button class="btn-delete-single" onclick="deleteSingleRow('${row.id}', '${row['Phone Number']}')">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        `;
+        tr.appendChild(actionTd);
+
+        tbody.appendChild(tr);
+    });
+}
+
+// Toggle select all checkboxes
+function toggleSelectAll(checkbox) {
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    allCheckboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+        if (checkbox.checked) {
+            selectedRows.add(cb.getAttribute('data-row-id'));
+        } else {
+            selectedRows.delete(cb.getAttribute('data-row-id'));
+        }
+    });
+    updateDeleteButton();
+}
+
+// Update delete button visibility
+function updateDeleteButton() {
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) {
+        deleteBtn.style.display = selectedRows.size > 0 ? 'inline-block' : 'none';
+    }
+}
+
+// Delete single row
+async function deleteSingleRow(id, phoneNumber) {
+    if (!confirm(`Delete ${phoneNumber}?`)) return;
+
+    try {
+        const { error } = await supabase
+            .from('permanent_blocked_numbers')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        // Remove from data array
+        data = data.filter(row => row.id !== id);
+        filteredData = filteredData.filter(row => row.id !== id);
+        selectedRows.delete(id);
+
+        renderDashboardTable();
+        alert('Number deleted successfully!');
+
+    } catch (error) {
+        alert('Error deleting row: ' + error.message);
+        console.error('Error:', error);
+    }
+}
+
+// Delete selected rows
+async function deleteSelectedRows() {
+    if (selectedRows.size === 0) {
+        alert('No rows selected');
+        return;
+    }
+
+    if (!confirm(`Delete ${selectedRows.size} selected rows?`)) return;
+
+    try {
+        // Convert Set to array and delete each
+        const idsToDelete = Array.from(selectedRows);
+        
+        const { error } = await supabase
+            .from('permanent_blocked_numbers')
+            .delete()
+            .in('id', idsToDelete);
+
+        if (error) throw error;
+
+        // Remove from data arrays
+        data = data.filter(row => !selectedRows.has(row.id));
+        filteredData = filteredData.filter(row => !selectedRows.has(row.id));
+        selectedRows.clear();
+
+        renderDashboardTable();
+        alert(`${idsToDelete.length} numbers deleted successfully!`);
+
+    } catch (error) {
+        alert('Error deleting rows: ' + error.message);
+        console.error('Error:', error);
+    }
+}
+
+// Search/Filter functionality
+async function filterData(searchTerm) {
+    if (!searchTerm.trim()) {
+        isFiltering = false;
+        filteredData = [];
+        renderDashboardTable();
+        return;
+    }
+
+    isFiltering = true;
+    const term = searchTerm.toLowerCase();
+
+    filteredData = data.filter(row => 
+        Object.values(row).some(value =>
+            value.toString().toLowerCase().includes(term)
+        )
+    );
+
+    renderDashboardTable();
+}
+
+// Initialize dashboard page
+async function initDashboardPage() {
+    try {
+        document.getElementById('loading').style.display = 'block';
+
+        const fetchedData = await blockedData();
+        data = fetchedData;
+        filteredData = [];
+        isFiltering = false;
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dataTable').style.display = 'table';
+
+        renderDashboardTable();
+    } catch (error) {
+        document.getElementById('loading').innerHTML =
+            `<div style="color: red;">❌ Error loading data: ${error.message}<br><br>
+            Check console for details.</div>`;
+        console.error('Error:', error);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initDashboardPage);

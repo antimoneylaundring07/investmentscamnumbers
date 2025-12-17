@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permanent Blocked Numbers</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://kit.fontawesome.com/1d34df86af.js" crossorigin="anonymous"></script>
+    <style>
+        /* Table checkbox styling */
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+
+        .checkbox-cell input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #007bff;
+        }
+
+        .blocked-row {
+            background-color: rgba(255, 0, 0, 0.05);
+        }
+
+        .blocked-row:hover {
+            background-color: rgba(255, 0, 0, 0.08);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-blocked {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .btn-delete,
+        .btn-copy {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .btn-copy {
+            background: #007bff;
+            color: #fff;
+        }
+
+        .btn-copy:hover {
+            background: #0056b3;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .search-box input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .pagination {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .pagination-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .pagination-btn.active {
+            background: #667eea;
+            color: #fff;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h3>Investment Scam</h3>
+        <ul class="nav-links">
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="update_data.html">Update Data</a></li>
+            <li><a href="tracker.html">Tracker</a></li>
+            <li><a href="permanent_blocked.html" class="active">Permanent Blocked</a></li>
+            <li><a href="activity_summary.html">Activity Summary</a></li>
+            <li><a href="#" onclick="logout()" style="color: #dc3545; font-weight: 600;">Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Permanent Blocked Numbers</h1>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="download-btn" onclick="exportBlockedToCSV()" style="margin-top: 0px;">📥 Export</button>
+            </div>
+            <div class="search-box" style="display: flex; align-items: center; gap: 10px;">
+                <label for="searchInputDash"
+                    style="font-weight: 600; color: #333; font-size: 14px; white-space: nowrap;">
+                    🔍 Search:
+                </label>
+                <input type="text" id="searchInput" placeholder="Search by phone number, reason, or blocked by..."
+                    onkeyup="filterBlockedData(this.value)">
+            </div>
+        </div>
+
+
+        <!-- Delete Selected Button -->
+        <div style="display: flex; gap: 10px;">
+            <button class="download-btn" id="deleteSelectedBtn" onclick="deleteSelectedRows()"
+                style="background-color: #dc3545; display: none;">
+                🗑️ Delete Selected
+            </button>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container">
+            <!-- Loading State -->
+            <div id="loading" class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading blocked numbers...
+            </div>
+
+            <!-- Data Table -->
+            <table id="dataTable" style="display:none;">
+                <thead id="tableHeader"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-info-circle"></i>
+                <p>No permanent blocked numbers found</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="pagination" style="display: none;"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/permanent_blocked.js"></script>
+</body>
+
+</html>
