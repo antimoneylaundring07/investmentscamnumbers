@@ -194,70 +194,6 @@ function updateSelectedCount() {
     countEl.style.display = count > 0 ? 'inline-block' : 'none';
 }
 
-// ============================================
-// TABLE RENDERING - DASHBOARD PAGE
-// ============================================
-
-// function renderDashboardTable() {
-//     // Decide what to display based on filtering state
-//     let displayData;
-//     if (isFiltering) {
-//         // User is searching - show filtered results (may be empty)
-//         displayData = filteredData;
-//     } else {
-//         // No search active - show all data
-//         displayData = data;
-//     }
-
-//     const tbody = document.getElementById('tableBody');
-
-//     // Check if no results
-//     if (!displayData || displayData.length === 0) {
-//         if (tbody) {
-//             tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 20px; color: #999;">No results found</td></tr>';
-//         }
-//         return;
-//     }
-
-//     const columns = Object.keys(displayData[0]);
-
-//     const header = document.getElementById('tableHeader');
-//     header.innerHTML = '<tr>' +
-//         columns.map(col => '<th>' + col + '</th>').join('') +
-//         '<th>Actions</th></tr>';
-
-//     tbody.innerHTML = '';
-
-//     displayData.forEach(row => {
-//         const tr = document.createElement('tr');
-
-//         const whatsappStatus = row['WhatsApp Status'] || row['whatsapp_status'] || '';
-//         if (whatsappStatus.toString().toLowerCase().trim() === 'blocked') {
-//             tr.className = 'blocked';
-//         } else if (whatsappStatus.toString().toLowerCase().trim() === 'active') {
-//             tr.className = 'active';
-//         } else if (whatsappStatus.toString().toLowerCase().trim() === 'restricted') {
-//             tr.className = 'restricted';
-//         }
-
-//         columns.forEach(col => {
-//             const td = document.createElement('td');
-//             td.textContent = row[col] || '';
-//             tr.appendChild(td);
-//         });
-
-//         const deleteTd = document.createElement('td');
-//         const deleteBtn = document.createElement('button');
-//         deleteBtn.textContent = 'Delete';
-//         deleteBtn.className = 'btn btn-cancel';
-//         deleteBtn.onclick = () => deleteRowFromDashboard(row.id, tr, deleteBtn);
-//         deleteTd.appendChild(deleteBtn);
-//         tr.appendChild(deleteTd);
-
-//         tbody.appendChild(tr);
-//     });
-// }
-
 let selectedRows = new Set();
 
 // Override renderDashboardTable to add checkboxes (NO delete button in rows)
@@ -300,6 +236,8 @@ function renderDashboardTable() {
             tr.className = 'active';
         } else if (whatsappStatus.toString().toLowerCase().trim() === 'restricted') {
             tr.className = 'restricted';
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'permanent') {
+            tr.className = 'permanent';
         }
 
         // Add checkbox cell

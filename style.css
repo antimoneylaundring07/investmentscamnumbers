@@ -200,7 +200,7 @@ td {
     border-bottom: 1px solid #dee2e6;
     white-space: nowrap;
     font-size: 14px;
-    color: #495057;
+    color: #000000;
 }
 
 tr:hover:not(.editing) {
@@ -221,6 +221,11 @@ tr.active {
 
 tr.restricted {
     background: #fff3cd !important;
+}
+
+tr.permanent {
+    background: #e63f36 !important;
+    color: #fff;
 }
 
 tr.blocked:hover {
