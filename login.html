@@ -5,8 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Numbers - Login</title>
+
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/1d34df86af.js" crossorigin="anonymous"></script>
+
     <link rel="stylesheet" href="style.css">
+
     <style>
         * {
             margin: 0;
@@ -28,6 +35,38 @@
             align-items: center;
             min-height: 100vh;
         }
+
+        .password-input-group {
+            position: relative;
+            align-items: center;
+            width: 100%;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 72%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            padding: 4px 8px;
+        }
+
+        .password-input-group input {
+            width: 100%;
+            padding-right: 45px;
+            padding-left: 12px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .password-toggle-btn:hover {
+            color: #333;
+            transform: translateY(-50%) scale(1.1);
+        }
     </style>
 </head>
 
@@ -46,50 +85,51 @@
                 <input type="email" id="loginEmail" placeholder="your@email.com" required>
             </div>
 
-            <div class="form-group">
+            <div class="form-group password-input-group">
                 <label for="loginPassword">Password</label>
                 <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                <button type="button" class="password-toggle-btn" id="loginPasswordToggle" title="Show/Hide Password">
+                    <i class="fa-solid fa-eye" id="loginPasswordIcon"></i>
+                </button>
             </div>
 
             <button type="submit" class="login-btn" id="loginBtn">
                 Sign In
             </button>
         </form>
-
-        <!-- Signup Form (Hidden by default) -->
-        <form id="signupForm" class="hidden">
-            <div class="form-group">
-                <label for="signupName">Full Name</label>
-                <input type="text" id="signupName" placeholder="Your name" required>
-            </div>
-
-            <div class="form-group">
-                <label for="signupEmail">Email</label>
-                <input type="email" id="signupEmail" placeholder="your@email.com" required>
-            </div>
-
-            <div class="form-group">
-                <label for="signupPassword">Password</label>
-                <input type="password" id="signupPassword" placeholder="Create a password (min 6 chars)" required>
-            </div>
-
-            <div class="form-group">
-                <label for="signupConfirm">Confirm Password</label>
-                <input type="password" id="signupConfirm" placeholder="Confirm password" required>
-            </div>
-
-            <button type="submit" class="login-btn" id="signupBtn">
-                Create Account
-            </button>
-        </form>
     </div>
 
-    <!-- <script src="script.js">protectPage();</script> -->
     <script src="js/supabaseClient.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/database.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/router.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginPasswordField = document.getElementById('loginPassword');
+            const loginPasswordToggle = document.getElementById('loginPasswordToggle');
+            const loginPasswordIcon = document.getElementById('loginPasswordIcon');
+
+            if (loginPasswordToggle && loginPasswordField && loginPasswordIcon) {
+                loginPasswordToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const isHidden = loginPasswordField.type === 'password';
+
+                    loginPasswordField.type = isHidden ? 'text' : 'password';
+
+                    // Toggle icon classes
+                    if (isHidden) {
+                        loginPasswordIcon.classList.remove('fa-eye');
+                        loginPasswordIcon.classList.add('fa-eye-slash');
+                    } else {
+                        loginPasswordIcon.classList.remove('fa-eye-slash');
+                        loginPasswordIcon.classList.add('fa-eye');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -1,16 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activity Log - WhatsApp Numbers Tracker</title>
+    <title>Activity Summary</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .activity-container {
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+        /* ✅ Make table scrollable horizontally and vertically */
+        .table-container {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 558px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Make table header sticky when scrolling down */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table thead {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 10;
+        }
+
+        table thead th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #dee2e6;
+            white-space: nowrap;
+        }
+
+        table tbody td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        table tbody tr:hover {
+            background: #f8f9fa;
+            transition: background 0.2s;
+        }
+
+        /* Responsive scrollbar styling */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-user {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-column {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .badge-value {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 16px;
         }
 
         .summary-cards {
@@ -52,9 +147,9 @@
 
         .filters-section {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 10px 0px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
         }
 
         .filters {
@@ -94,82 +189,6 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .activity-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .activity-table thead {
-            background: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        .activity-table th {
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            color: #333;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .activity-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        }
-
-        .activity-table tbody tr:hover {
-            background: #f8f9fa;
-            transition: background 0.2s;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .badge-user {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .badge-column {
-            background: #f3e5f5;
-            color: #7b1fa2;
-        }
-
-        .badge-value {
-            background: #e8f5e9;
-            color: #388e3c;
-        }
-
-        .timestamp {
-            color: #666;
-            font-size: 13px;
-            white-space: nowrap;
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
-            font-size: 16px;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-        }
-
         .btn {
             padding: 10px 16px;
             border: none;
@@ -203,8 +222,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
+            margin-bottom: 0px;
+            /* padding-bottom: 20px; */
             border-bottom: 2px solid #eee;
         }
 
@@ -214,6 +233,40 @@
             font-size: 28px;
         }
 
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 8px 14px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .user-info-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .user-email {
+            font-size: 13px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .user-icon {
+            font-size: 16px;
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -221,7 +274,6 @@
         }
     </style>
 </head>
-
 <body>
     <div class="sidebar">
         <h3>Investment Scam</h3>
@@ -230,69 +282,82 @@
             <li><a href="update_data.html">Update Data</a></li>
             <li><a href="tracker.html">Tracker</a></li>
             <li><a href="all_number.html">All Numbers</a></li>
-            <li><a href="activity_summary.html" class="active">Activity Summary</a></li>
+            <li><a href="activity_log.html" class="active">Activity Log</a></li>
             <li><a href="#" onclick="logout()" style="color: #dc3545; font-weight: 600;">Logout</a></li>
         </ul>
     </div>
 
-    <div class="activity-container">
-        <!-- Summary Cards -->
-        <!-- <div class="summary-cards">
-            <div class="summary-card">
-                <h3>📝 Total Changes</h3>
-                <div class="number" id="totalChanges">0</div>
-            </div>
-            <div class="summary-card">
-                <h3>👥 Unique Users</h3>
-                <div class="number" id="uniqueUsers">0</div>
-            </div>
-            <div class="summary-card">
-                <h3>🔧 Columns Changed</h3>
-                <div class="number" id="changedColumns">0</div>
-            </div>
-        </div> -->
-
-        <!-- Filters Section -->
-        <div class="filters-section">
-            <h3 style="margin-top: 0; color: #333;">🔍 Filters</h3>
-            <div class="filters">
-                <div class="filter-group">
-                    <label>User Email</label>
-                    <input type="text" id="filterUser" placeholder="e.g., user@example.com" />
+    <div class="main-content">
+        <div class="header">
+            <h1>📋 Activity Log</h1>
+            <div class="header-right">
+                <div class="user-info">
+                    <div class="user-icon">👤</div>
+                    <div>
+                        <div class="user-info-label">Logged In As</div>
+                        <div class="user-email" id="userEmail">Loading...</div>
+                    </div>
                 </div>
-                <div class="filter-group">
-                    <label>Column Name</label>
-                    <input type="text" id="filterColumn" placeholder="e.g., WhatsApp Status" />
-                </div>
-                <div class="filter-group">
-                    <label>Date Range</label>
-                    <input type="date" id="filterDate" />
-                </div>
-                <button class="btn btn-primary" onclick="applyFilters()">🔍 Filter</button>
-                <button class="btn btn-secondary" onclick="clearFilters()">🔄 Reset</button>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
             </div>
         </div>
 
-        <!-- Activity Table -->
-        <div id="loading" class="loading">
-            <p>⏳ Loading activity log...</p>
-        </div>
+        <div>
+            <!-- Filters Section -->
+            <div class="filters-section">
+                <!-- <h3 style="margin-top: 0; color: #333;">🔍 Filters</h3> -->
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>User Email</label>
+                        <input 
+                            type="text" 
+                            id="filterUser" 
+                            placeholder="e.g., user@example.com"
+                        />
+                    </div>
+                    <div class="filter-group">
+                        <label>Column Name</label>
+                        <input 
+                            type="text" 
+                            id="filterColumn" 
+                            placeholder="e.g., WhatsApp Status"
+                        />
+                    </div>
+                    <div class="filter-group">
+                        <label>Date Range</label>
+                        <input 
+                            type="date" 
+                            id="filterDate" 
+                        />
+                    </div>
+                    <button class="btn btn-primary" onclick="applyFilters()">🔍 Filter</button>
+                    <button class="btn btn-secondary" onclick="clearFilters()">🔄 Reset</button>
+                </div>
+            </div>
 
-        <div id="activityContent" style="display: none;">
-            <table class="activity-table">
-                <thead>
-                    <tr>
-                        <th>👤 User Email</th>
-                        <th>🔧 Column Changed</th>
-                        <th>✏️ New Value</th>
-                        <th>📍 Row ID</th>
-                        <th>⏰ Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody id="activityBody">
-                    <!-- Rows will be inserted here -->
-                </tbody>
-            </table>
+            <!-- ✅ Scrollable Table -->
+            <div id="loading" class="loading">
+                <p>⏳ Loading activity log...</p>
+            </div>
+
+            <div id="activityContent" style="display: none;">
+                <div class="table-container">
+                    <table class="activity-table">
+                        <thead>
+                            <tr>
+                                <th>👤 User Email</th>
+                                <th>🔧 Column Changed</th>
+                                <th>✏️ New Value</th>
+                                <th>📍 Row ID</th>
+                                <th>⏰ Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activityBody">
+                            <!-- Rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -309,6 +374,12 @@
         async function loadActivityLog() {
             try {
                 protectPage(); // Ensure user is logged in
+                
+                // Display current user email
+                const currentUser = getCurrentUser();
+                if (currentUser) {
+                    document.getElementById('userEmail').textContent = currentUser.email;
+                }
 
                 const activities = await getActivityLog();
                 allActivities = activities;
@@ -333,8 +404,8 @@
 
         function formatTimestampIST(timestamp) {
             const date = new Date(timestamp);
-
-            // Format for India Standard Time (IST)
+            
+            // Use toLocaleString directly
             return date.toLocaleString('en-IN', {
                 year: 'numeric',
                 month: '2-digit',
@@ -355,24 +426,24 @@
             }
 
             tbody.innerHTML = activities.map(activity => `
-            <tr>
-                <td>
-                    <span class="badge badge-user">👤 ${activity.user_email}</span>
-                </td>
-                <td>
-                    <span class="badge badge-column">🔧 ${activity.column_name}</span>
-                </td>
-                <td>
-                    <span class="badge badge-value">✏️ ${activity.new_value || 'N/A'}</span>
-                </td>
-                <td>
-                    <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">#${activity.row_id || 'N/A'}</code>
-                </td>
-                <td class="timestamp">
-                    ⏰ ${formatTimestampIST(activity.timestamp)}
-                </td>
-            </tr>
-        `).join('');
+                <tr>
+                    <td>
+                        <span class="badge badge-user">👤 ${activity.user_email}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-column">🔧 ${activity.column_name}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-value">✏️ ${activity.new_value || 'N/A'}</span>
+                    </td>
+                    <td>
+                        <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">#${activity.row_id || 'N/A'}</code>
+                    </td>
+                    <td class="timestamp">
+                        ⏰ ${formatTimestampIST(activity.timestamp)}
+                    </td>
+                </tr>
+            `).join('');
         }
 
         function applyFilters() {
@@ -384,19 +455,19 @@
 
             // Filter by email
             if (userEmail) {
-                filtered = filtered.filter(a =>
+                filtered = filtered.filter(a => 
                     a.user_email.toLowerCase().includes(userEmail)
                 );
             }
 
             // Filter by column name
             if (columnName) {
-                filtered = filtered.filter(a =>
+                filtered = filtered.filter(a => 
                     a.column_name.toLowerCase().includes(columnName)
                 );
             }
 
-            // Filter by date (IST)
+            // Filter by date
             if (filterDate) {
                 filtered = filtered.filter(a => {
                     const activityDate = new Date(a.timestamp).toLocaleDateString('en-IN');
@@ -417,7 +488,7 @@
 
         // Real-time updates every 5 seconds
         let autoRefreshInterval;
-
+        
         function startAutoRefresh() {
             autoRefreshInterval = setInterval(async () => {
                 try {
@@ -445,5 +516,4 @@
         window.addEventListener('beforeunload', stopAutoRefresh);
     </script>
 </body>
-
 </html>
