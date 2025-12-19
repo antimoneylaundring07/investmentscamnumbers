@@ -79,6 +79,24 @@ async function deleteRowFromDB(rowId) {
     }
 }
 
+async function deleteMultipleBlockedRows(rowId) {
+    try {
+        const { error } = await supabaseClient
+            .from(BLOCKED_NUMBERS_TABLE)
+            .delete()
+            .eq('id', rowId);
+
+        if (error) {
+            throw error;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('❌ Delete error:', error);
+        throw error;
+    }
+}
+
 async function importCSVData(newRecords) {
     try {
         const recordsWithId = newRecords.filter(r => r.id);
