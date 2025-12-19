@@ -4,7 +4,8 @@ async function loadData() {
     try {
         const { data: fetchedData, error } = await supabaseClient
             .from(TABLE_NAME)
-            .select('*');
+            .select('*')
+            .order('id', { ascending: true });
 
         if (error) {
             console.error('❌ Supabase error:', error);
@@ -23,7 +24,8 @@ async function blockedData() {
     try {
         const { data: fetchedData, error } = await supabaseClient
             .from(BLOCKED_NUMBERS_TABLE)
-            .select('*');
+            .select('*')
+            .order('id', { ascending: true });;
 
         if (error) {
             console.error('❌ Supabase error:', error);
@@ -44,7 +46,8 @@ async function updateRowInDB(rowId, updatedData) {
             .from(TABLE_NAME)
             .update(updatedData)
             .eq('id', rowId)
-            .select();
+            .select()
+            .order('id', { ascending: true });
 
         if (error) {
             console.error('❌ Update error:', error);

@@ -285,8 +285,16 @@ function toggleSelectAll(checkbox) {
 
 function updateDeleteButton() {
     const deleteBtn = document.getElementById('deleteBulkBtn');
-    deleteBtn.textContent = `Delete rows (${selectedRows.size})`;
-    deleteBtn.disabled = selectedRows.size === 0;
+    if(deleteBtn) {
+        if (selectedRows.size > 0) {
+            deleteBtn.style.display = 'inline-block';
+            deleteBtn.textContent = `Delete rows (${selectedRows.size})`;
+        } else {
+            deleteBtn.textContent = 'Delete rows';
+        }
+    }
+    // deleteBtn.textContent = `Delete rows (${selectedRows.size})`;
+    // deleteBtn.disabled = selectedRows.size === 0;
 }
 
 async function bulkDeleteSelected() {
@@ -617,9 +625,6 @@ async function updateRow(rowId) {
         showMessage('❌ Update failed: ' + (error.message || error), 'error');
     }
 }
-
-
-
 
 // ============================================
 // DELETE FUNCTIONS

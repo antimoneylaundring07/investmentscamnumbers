@@ -155,7 +155,7 @@ function updateDeleteButton() {
             deleteBtn.style.display = 'inline-block';
             deleteBtn.textContent = `Delete rows (${selectedRows.size})`;
         } else {
-            deleteBtn.style.display = 'none';
+            deleteBtn.textContent = 'Delete rows';
         }
     }
 }
@@ -220,11 +220,11 @@ function filterBlockedData(searchTerm) {
     isFiltering = true;
     const term = searchTerm.toLowerCase();
 
-    filteredData = blockedData_arr.filter(row =>
-        row.phone_number.toLowerCase().includes(term) ||
-        (row.reason && row.reason.toLowerCase().includes(term)) ||
-        (row.blocked_by && row.blocked_by.toLowerCase().includes(term))
-    );
+    filteredData = blockedData_arr.filter(row => {
+        return Object.values(row).some(value =>
+            String(value || '').toLowerCase().includes(term)
+        );
+    });
 
     currentPage = 1;
     renderBlockedTable();

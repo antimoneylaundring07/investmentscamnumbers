@@ -156,7 +156,7 @@
                     style="font-weight: 600; color: #333; font-size: 14px; white-space: nowrap;">
                     🔍 Search:
                 </label>
-                <input type="text" id="searchInput" placeholder="Search by phone number, reason, or blocked by..."
+                <input for="searchInput" type="text" id="searchInput" placeholder="Search by phone number, reason, or blocked by..."
                     onkeyup="filterBlockedData(this.value)">
             </div>
         </div>
@@ -166,7 +166,7 @@
         <div style="display: flex; gap: 10px;">
             <button class="download-btn" id="deleteSelectedBtn" onclick="deleteSelectedRows()"
                 style="background-color: #dc3545;">
-                🗑️ Delete rows
+                Delete rows
             </button>
         </div>
 
