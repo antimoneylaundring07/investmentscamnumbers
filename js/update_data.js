@@ -285,7 +285,7 @@ function toggleSelectAll(checkbox) {
 
 function updateDeleteButton() {
     const deleteBtn = document.getElementById('deleteBulkBtn');
-    deleteBtn.textContent = `🗑️ Delete Selected (${selectedRows.size})`;
+    deleteBtn.textContent = `Delete rows (${selectedRows.size})`;
     deleteBtn.disabled = selectedRows.size === 0;
 }
 
@@ -472,61 +472,154 @@ function cancelEdit() {
     renderUpdateDateTable();
 }
 
+// Helpers (place these above or reuse your existing helpers)
+function cleanObject(obj) {
+    return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
+}
+function isDifferent(oldVal, newVal) {
+    const a = oldVal === undefined ? null : oldVal;
+    const b = newVal === undefined ? null : newVal;
+    return String(a) !== String(b);
+}
+
+// Revised updateRow
 async function updateRow(rowId) {
-    const inputs = document.querySelectorAll(`input[data-row-id="${rowId}"]`);
-    const selects = document.querySelectorAll(`select[data-row-id="${rowId}"]`);
-    const updatedData = {};
-
-    // Get values from text inputs
-    inputs.forEach(input => {
-        const colName = input.getAttribute('data-column');
-        updatedData[colName] = input.value;
-    });
-
-    // Get values from select dropdowns
-    selects.forEach(select => {
-        const colName = select.getAttribute('data-column');
-        updatedData[colName] = select.value;
-    });
-
-    // Auto-calculate days if Blocked Date changes
-    if ("Blocked Date" in updatedData) {
-        updatedData["No of Days"] = calculateDays(updatedData["Blocked Date"]);
-        if (updatedData["Blocked Date"] && updatedData["Blocked Date"] !== "NA") {
-            updatedData["Unblocked Date"] = "NA";
-        }
-    }
-
-    if ("Unblocked Date" in updatedData && updatedData["Unblocked Date"] && updatedData["Unblocked Date"] !== "NA") {
-        updatedData["Blocked Date"] = "NA";
-        updatedData["No of Days"] = "NA";
-    }
-
     try {
-        // ✅ NEW: Log each change to activity_log table
-        for (const [columnName, newValue] of Object.entries(updatedData)) {
-            await logActivityChange(columnName, newValue, rowId);
+        // 1) Collect UI inputs
+        const inputs = document.querySelectorAll(`input[data-row-id="${rowId}"]`);
+        const selects = document.querySelectorAll(`select[data-row-id="${rowId}"]`);
+        const updatedData = {};
+
+        inputs.forEach(input => {
+            const colName = input.getAttribute('data-column');
+            updatedData[colName] = input.value;
+        });
+        selects.forEach(select => {
+            const colName = select.getAttribute('data-column');
+            updatedData[colName] = select.value;
+        });
+
+        // 2) Auto-calc logic (your existing rules)
+        if ("Blocked Date" in updatedData) {
+            updatedData["No of Days"] = calculateDays(updatedData["Blocked Date"]);
+            if (updatedData["Blocked Date"] && updatedData["Blocked Date"] !== "NA") {
+                updatedData["Unblocked Date"] = "NA";
+            }
+        }
+        if ("Unblocked Date" in updatedData && updatedData["Unblocked Date"] && updatedData["Unblocked Date"] !== "NA") {
+            updatedData["Blocked Date"] = "NA";
+            updatedData["No of Days"] = "NA";
         }
 
-        // Update the database
-        await updateRowInDB(rowId, updatedData);
+        // 3) Get original row from client cache (data)
+        const originalRow = data.find(r => r.id === rowId);
+        if (!originalRow) {
+            showMessage('Row not found locally. Please refresh and try again.', 'error');
+            return;
+        }
 
+        // 4) Build changes (only fields that actually changed)
+        const changes = {};
+        for (const [k, v] of Object.entries(updatedData)) {
+            if (isDifferent(originalRow[k], v)) {
+                changes[k] = v;
+            }
+        }
+
+        if (Object.keys(changes).length === 0) {
+            showMessage('No changes detected.', 'info');
+            editingRowId = null;
+            renderUpdateDateTable();
+            return;
+        }
+
+        // 5) Determine status change to Permanent
+        const oldStatus = String(originalRow['WhatsApp Status'] ?? '').toLowerCase().trim();
+        const newStatus = String(changes['WhatsApp Status'] ?? originalRow['WhatsApp Status'] ?? '').toLowerCase().trim();
+        const isChangingToPermanent = newStatus === 'permanent' && oldStatus !== 'permanent';
+
+        // 6) If changing to permanent, check blocked and ask confirmation BEFORE update
+        let userConfirmedMove = false;
+        if (isChangingToPermanent) {
+            const alreadyBlocked = await isNumberAlreadyBlocked(originalRow.Number);
+            if (alreadyBlocked) {
+                // If already blocked, inform user and continue with update only
+                const proceed = confirm(`This number (${originalRow.Number}) is already in Permanent Blocked Numbers table. Do you still want to save the changes to the numbers table?`);
+                if (!proceed) {
+                    showMessage('Operation cancelled.', 'info');
+                    editingRowId = null;
+                    renderUpdateDateTable();
+                    return;
+                }
+            } else {
+                userConfirmedMove = confirm(
+                    `🔒 WhatsApp Status is being set to "Permanent".\n\n` +
+                    `This will move ${originalRow.Number} to Permanent Blocked Numbers table AFTER update.\n\n` +
+                    `Continue?`
+                );
+                if (!userConfirmedMove) {
+                    showMessage('Operation cancelled. Status was not updated.', 'info');
+                    editingRowId = null;
+                    renderUpdateDateTable();
+                    return;
+                }
+            }
+        }
+
+        // 7) Update the numbers table (server)
+        // Ensure we send only keys that changed
+        const safeChanges = cleanObject(changes);
+        try {
+            await updateRowInDB(rowId, safeChanges); // adapt if your function returns {error}
+        } catch (updErr) {
+            console.error('Update failed:', updErr);
+            showMessage('Update failed: ' + (updErr.message || updErr), 'error');
+            return;
+        }
+
+        // 8) Log the changes (pass old value for context if your function supports)
+        for (const [colName, newValue] of Object.entries(safeChanges)) {
+            try {
+                await logActivityChange(colName, newValue, rowId, originalRow[colName]); // remove 4th arg if your func doesn't accept it
+            } catch (logErr) {
+                console.warn('Logging failed for', colName, logErr);
+            }
+        }
+
+        // 9) If confirmed to move to Permanent and not already blocked -> move from DB by id
+        if (isChangingToPermanent && userConfirmedMove) {
+            try {
+                // moveToBlockedNumbersById will fetch row from DB and insert into blocked table
+                await moveToBlockedNumbers(rowId);
+                alert('✅ Number moved to Permanent Blocked Numbers!');
+            } catch (moveErr) {
+                console.error('Move failed:', moveErr);
+                showMessage('Move failed: ' + (moveErr.message || moveErr), 'error');
+                // Note: numbers table is already updated. For true atomicity use server-side transaction.
+            }
+        }
+
+        // 10) Update client-side cache & UI
         const rowIndex = data.findIndex(r => r.id === rowId);
-        data[rowIndex] = { ...data[rowIndex], ...updatedData };
+        if (rowIndex > -1) {
+            data[rowIndex] = { ...data[rowIndex], ...safeChanges };
+        }
 
-        alert('✅ Updated successfully!');
         showMessage('✅ Updated successfully!', 'success');
         editingRowId = null;
         renderUpdateDateTable();
 
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
+        // Optional: reload if required elsewhere
+        // setTimeout(() => location.reload(), 1200);
+
     } catch (error) {
-        console.error('❌ Error:', error);
-        showMessage('❌ Update failed: ' + error.message, 'error');
+        console.error('❌ Error in updateRow:', error);
+        showMessage('❌ Update failed: ' + (error.message || error), 'error');
     }
 }
+
+
+
 
 // ============================================
 // DELETE FUNCTIONS

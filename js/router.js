@@ -42,6 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 initTrackerPage();
             }
             break;
+        case 'permanent_blocked':
+            if (typeof initAllNumbersPage === 'function') {
+                protectPage();
+                fetchBlockedData();
+            }
         case 'login':
             // Login page doesn't need protection
             break;

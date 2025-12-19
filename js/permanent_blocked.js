@@ -1,4 +1,3 @@
-// permanent_blocked.js
 // Display permanent blocked numbers with full functionality
 
 let blockedData_arr = [];
@@ -37,7 +36,7 @@ async function fetchBlockedData() {
 // Render permanent blocked numbers table
 function renderBlockedTable() {
     let displayData;
-    
+
     if (isFiltering) {
         displayData = filteredData;
     } else {
@@ -48,13 +47,11 @@ function renderBlockedTable() {
     const tableHeader = document.getElementById('tableHeader');
     const dataTable = document.getElementById('dataTable');
     const emptyState = document.getElementById('emptyState');
-    const pagination = document.getElementById('pagination');
 
     // Check if data is empty
     if (!displayData || displayData.length === 0) {
         dataTable.style.display = 'none';
         emptyState.style.display = 'block';
-        pagination.style.display = 'none';
         return;
     }
 
@@ -63,15 +60,15 @@ function renderBlockedTable() {
 
     // Get all column names dynamically from first row
     const columns = Object.keys(displayData[0]);
-    
+
     // Filter out unnecessary columns
-    const excludeColumns = ['id', 'created_at', 'updated_at'];
+    const excludeColumns = ['created_at', 'updated_at'];
     const displayColumns = columns.filter(col => !excludeColumns.includes(col));
 
     // Build table header dynamically
     let headerHTML = '<tr>';
     headerHTML += '<th class="checkbox-cell"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"></th>';
-    
+
     // Add dynamic columns
     displayColumns.forEach(col => {
         // Format column name (convert snake_case to Title Case)
@@ -81,10 +78,7 @@ function renderBlockedTable() {
             .join(' ');
         headerHTML += `<th>${formattedCol}</th>`;
     });
-    
-    headerHTML += '<th>Action</th>';
-    headerHTML += '</tr>';
-    
+
     tableHeader.innerHTML = headerHTML;
 
     // Clear existing rows
@@ -116,35 +110,26 @@ function renderBlockedTable() {
         // Add dynamic data columns
         displayColumns.forEach(col => {
             const td = document.createElement('td');
-            
+
             let value = row[col];
-            
-            // Format special columns
-            if (col === 'phone_number') {
-                td.innerHTML = `<strong>${value}</strong>`;
-            } else if (col === 'created_at' || col === 'updated_at') {
-                td.textContent = new Date(value).toLocaleDateString();
+
+            if (col === 'Number') {
+                // bold number
+                td.innerHTML = `<strong>${value == null ? '' : value}</strong>`;
             } else {
-                td.textContent = value || 'N/A';
+                // show exactly what DB has: "NA", etc. Only null/undefined => empty.
+                td.textContent = value == null ? '' : value;
             }
-            
+
+
             tr.appendChild(td);
         });
-
-        // Actions cell
-        const actionTd = document.createElement('td');
-        actionTd.innerHTML = `
-            <button class="btn-delete" onclick="deleteSingleRow('${row.id}', '${row.phone_number}')">
-                🗑️ Delete
-            </button>
-        `;
-        tr.appendChild(actionTd);
 
         tbody.appendChild(tr);
     });
 
     dataTable.style.display = 'table';
-    renderPagination();
+    // renderPagination();
 }
 
 
@@ -168,7 +153,7 @@ function updateDeleteButton() {
     if (deleteBtn) {
         if (selectedRows.size > 0) {
             deleteBtn.style.display = 'inline-block';
-            deleteBtn.textContent = `🗑️ Delete Selected (${selectedRows.size})`;
+            deleteBtn.textContent = `Delete rows (${selectedRows.size})`;
         } else {
             deleteBtn.style.display = 'none';
         }
@@ -245,65 +230,10 @@ function filterBlockedData(searchTerm) {
     renderBlockedTable();
 }
 
-// Pagination render
-function renderPagination() {
-    const displayData = isFiltering ? filteredData : blockedData_arr;
-    const totalPages = Math.ceil(displayData.length / PAGE_SIZE);
-    const paginationBox = document.getElementById('pagination');
-
-    if (totalPages <= 1) {
-        paginationBox.style.display = 'none';
-        return;
-    }
-
-    paginationBox.innerHTML = '';
-    paginationBox.style.display = 'flex';
-
-    // Previous button
-    if (currentPage > 1) {
-        const prevBtn = document.createElement('button');
-        prevBtn.textContent = '← Previous';
-        prevBtn.className = 'pagination-btn';
-        prevBtn.onclick = () => {
-            currentPage--;
-            renderBlockedTable();
-            window.scrollTo(0, 0);
-        };
-        paginationBox.appendChild(prevBtn);
-    }
-
-    // Page numbers
-    for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        btn.className = 'pagination-btn';
-        if (i === currentPage) btn.classList.add('active');
-        btn.onclick = () => {
-            currentPage = i;
-            renderBlockedTable();
-            window.scrollTo(0, 0);
-        };
-        paginationBox.appendChild(btn);
-    }
-
-    // Next button
-    if (currentPage < totalPages) {
-        const nextBtn = document.createElement('button');
-        nextBtn.textContent = 'Next →';
-        nextBtn.className = 'pagination-btn';
-        nextBtn.onclick = () => {
-            currentPage++;
-            renderBlockedTable();
-            window.scrollTo(0, 0);
-        };
-        paginationBox.appendChild(nextBtn);
-    }
-}
-
 // Export to CSV
 function exportBlockedToCSV() {
     const displayData = isFiltering ? filteredData : blockedData_arr;
-    
+
     if (displayData.length === 0) {
         alert('No data to export');
         return;

@@ -10,6 +10,15 @@
     <script src="https://kit.fontawesome.com/1d34df86af.js" crossorigin="anonymous"></script>
     <style>
         /* Table checkbox styling */
+        .blocked-container {
+            overflow: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-height: calc(100vh - 125px);
+            position: relative;
+        }
+
         .checkbox-cell {
             width: 40px;
             text-align: center;
@@ -96,7 +105,7 @@
         }
 
         .pagination {
-            margin-top: 20px;
+            margin-top: 13px;
             display: flex;
             justify-content: center;
             gap: 10px;
@@ -156,13 +165,13 @@
         <!-- Delete Selected Button -->
         <div style="display: flex; gap: 10px;">
             <button class="download-btn" id="deleteSelectedBtn" onclick="deleteSelectedRows()"
-                style="background-color: #dc3545; display: none;">
-                🗑️ Delete Selected
+                style="background-color: #dc3545;">
+                🗑️ Delete rows
             </button>
         </div>
 
         <!-- Table Container -->
-        <div class="table-container">
+        <div class="blocked-container">
             <!-- Loading State -->
             <div id="loading" class="loading">
                 <i class="fas fa-spinner fa-spin"></i> Loading blocked numbers...
