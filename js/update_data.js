@@ -12,7 +12,8 @@ const PLATFORM_TABLES = {
     'whatsapp': 'numbers',           // Adjust to your actual table names
     'facebook': 'facebook',
     'instagram': 'instagram',
-    'amazon': 'amazon_accounts'
+    'amazon': 'amazon_accounts',
+    'telegram': 'telegram'
 };
 
 const DATE_COLUMNS = ["Blocked Date", "Unblocked Date", "Recharge Date"];
@@ -313,6 +314,8 @@ async function bulkDeleteSelected() {
 
     const count = selectedRows.size;
     const confirmDelete = confirm(`🗑️ Delete ${count} row(s)? This action cannot be undone!`);
+    const platform = document.getElementById('platformDropdown')?.value;
+    const tableName = PLATFORM_TABLES[platform];
 
     if (!confirmDelete) return;
 
@@ -322,7 +325,7 @@ async function bulkDeleteSelected() {
 
     try {
         for (const rowId of selectedRows) {
-            await deleteRowFromDB(rowId);
+            await deleteRowFromDB(rowId, tableName);
             data = data.filter(r => r.id !== rowId);
             filteredData = filteredData.filter(r => r.id !== rowId);
         }
@@ -642,8 +645,11 @@ async function deleteRowFromDashboard(rowId, rowElem, btnElem) {
     if (!confirm('Really delete this row?')) return;
     btnElem.disabled = true;
     btnElem.textContent = 'Deleting...';
+    const platform = document.getElementById('platformDropdown')?.value;
+    const tableName = PLATFORM_TABLES[platform];
+
     try {
-        await deleteRowFromDB(rowId);
+        await deleteRowFromDB(rowId, tableName);
         showMessage('✅ Row deleted', 'success');
         data = data.filter(r => r.id !== rowId);
         filteredData = filteredData.filter(r => r.id !== rowId);
@@ -663,7 +669,6 @@ async function initDashboardPage() {
     try {
         // const fetchedData = await loadData();
         const fetchedData = await loadData(PLATFORM_TABLES['whatsapp']);
-        console.log('Initial data loaded for dashboard:', fetchedData);
         data = fetchedData;
         filteredData = [];
         isFiltering = false;
@@ -683,7 +688,6 @@ async function initDashboardPage() {
 async function handlePlatformChange(platform) {
     currentPlatform = platform;
     const tableName = PLATFORM_TABLES[platform];
-    console.log('Table:', tableName);
     
     try {
         const fetchedData = await loadData(tableName);

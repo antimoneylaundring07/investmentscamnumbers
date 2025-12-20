@@ -13,18 +13,3 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { supabaseClient, SUPABASE_URL, SUPABASE_ANON_KEY, TABLE_NAME, BLOCKED_NUMBERS_TABLE };
 }
-
-const COLUMN_MAPPING = {
-    'numbers_to_blocked': {
-        'Owned By': 'Owned By',
-        'Number': 'Number',
-        'Whatsapp Login Device': 'Whatsapp Login Device',
-        'SIM Inserted Device': 'SIM Inserted Device',
-        'Sim Type': 'Sim Type',
-        'Blocked Date': 'Blocked Date',
-        'No of Days': 'No of Days',
-        'WA Acc Date': 'WA Acc Date',
-        'Sim Operator': 'Sim Operator',
-        'SIM Buy Date': 'SIM Buy Date'
-    }
-};

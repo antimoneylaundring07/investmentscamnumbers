@@ -1,4 +1,3 @@
-
 // Database operations and CRUD functions
 async function loadData(tableName = TABLE_NAME) {
     try {
@@ -61,10 +60,10 @@ async function updateRowInDB(rowId, updatedData) {
     }
 }
 
-async function deleteRowFromDB(rowId) {
+async function deleteRowFromDB(rowId, tableName = TABLE_NAME) {
     try {
         const { error } = await supabaseClient
-            .from(TABLE_NAME)
+            .from(tableName)
             .delete()
             .eq('id', rowId);
 
@@ -97,39 +96,48 @@ async function deleteMultipleBlockedRows(rowId) {
     }
 }
 
-async function importCSVData(newRecords) {
+async function importCSVData(newRecords, platform) {
     try {
+        const tableName = PLATFORM_TABLES[platform];
+
+        if (!tableName) {
+            throw new Error('Invalid platform selected');
+        }
+
         const recordsWithId = newRecords.filter(r => r.id);
         const recordsWithoutId = newRecords.filter(r => !r.id);
 
+        // 🔹 UPDATE records with id
         if (recordsWithId.length > 0) {
             for (const rec of recordsWithId) {
                 const id = rec.id;
                 delete rec.id;
 
                 const { error } = await supabaseClient
-                    .from(TABLE_NAME)
+                    .from(tableName)
                     .update(rec)
                     .eq('id', id);
 
                 if (error) {
-                    console.error('Update error for id', id, error);
+                    console.error(`Update error [${tableName}] id=${id}`, error);
                 }
             }
         }
 
+        // 🔹 INSERT records without id
         if (recordsWithoutId.length > 0) {
             const { error } = await supabaseClient
-                .from(TABLE_NAME)
+                .from(tableName)
                 .insert(recordsWithoutId);
 
             if (error) {
-                console.error('Insert error:', error);
+                console.error(`Insert error [${tableName}]`, error);
                 throw error;
             }
         }
 
         return true;
+
     } catch (error) {
         console.error('Import error:', error);
         throw error;
@@ -220,34 +228,5 @@ async function isNumberAlreadyBlocked(phoneNumber) {
         return false;
     }
 }
-
-// async function updateBlockedName(rowId, newName) {
-//     const { data, error } = await supabaseClient
-//         .from('permanent_blocked_number')
-//         .update({ name: newName, updated_at: new Date().toISOString() })
-//         .eq('id', rowId)
-//         .select();
-    
-//     if (error) throw error;
-//     return true;
-// }
-
-// // Add this to your database.js
-// async function loadDataByTable(tableName) {
-//     try {
-//         const { data, error } = await supabase
-//             .from(tableName)
-//             .select('*')
-//             .order('id', { ascending: true });
-
-//         if (error) throw error;
-//         return data || [];
-//     } catch (error) {
-//         console.error(`Error loading data from ${tableName}:`, error);
-//         throw error;
-//     }
-// }
-
-
 
 console.log('Database script loaded successfully');

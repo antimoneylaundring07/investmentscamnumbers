@@ -1,5 +1,10 @@
-// import.js
-// CSV import and file handling functionality
+const PLATFORM = {
+    whatsapp: 'numbers',
+    facebook: 'facebook',
+    instagram: 'instagram',
+    amazon: 'amazon_accounts',
+    telegram: 'telegram'
+};
 
 function triggerImport() {
     const fileInput = document.getElementById('importFile');
@@ -19,6 +24,10 @@ document.addEventListener('change', async (e) => {
         const importBtn = document.querySelector('[onclick="triggerImport()"]') || 
                          document.getElementById('importBtn');
         const originalText = importBtn ? importBtn.textContent : '';
+
+        const platform = document.getElementById('platformDropdown')?.value;
+        console.log('Selected platform for import:', platform);
+        const tableName = PLATFORM[platform];
 
         // Loading state ON
         if (importBtn) {
@@ -57,7 +66,8 @@ document.addEventListener('change', async (e) => {
             }
 
             // Import the data using database function
-            await importCSVData(newRecords);
+            // await importCSVData(newRecords);
+            await importCSVData(newRecords, tableName);
 
             showMessage('✅ Import completed. Refreshing data...', 'success');
             const fetchedData = await loadData();
