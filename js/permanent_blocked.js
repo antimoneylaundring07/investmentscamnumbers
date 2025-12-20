@@ -2,8 +2,10 @@
 
 let blockedData_arr = [];
 let filteredData = [];
+let selectedColumns = [];
 let isFiltering = false;
 let selectedRows = new Set();
+let editingRowId = null;
 
 const PAGE_SIZE = 10;
 let currentPage = 1;
@@ -61,6 +63,10 @@ function renderBlockedTable() {
     // Get all column names dynamically from first row
     const columns = Object.keys(displayData[0]);
 
+    tableHeader.innerHTML = '<tr>' +
+        columns.map(col => '<th>' + col + '</th>').join('') +
+        '<th>Actions</th></tr>';
+
     // Filter out unnecessary columns
     const excludeColumns = ['created_at', 'updated_at'];
     const displayColumns = columns.filter(col => !excludeColumns.includes(col));
@@ -88,7 +94,10 @@ function renderBlockedTable() {
     displayData.forEach(row => {
         const tr = document.createElement('tr');
         tr.className = 'blocked-row';
+        const isEditing = editingRowId === row.id;
 
+        if (isEditing) tr.className = 'editing';
+        
         // Checkbox cell
         const checkboxTd = document.createElement('td');
         checkboxTd.className = 'checkbox-cell';
@@ -120,11 +129,44 @@ function renderBlockedTable() {
                 // show exactly what DB has: "NA", etc. Only null/undefined => empty.
                 td.textContent = value == null ? '' : value;
             }
+            // if (col === 'Current Status'){
+            //     const select = document.createElement('select');
+            //         select.className = 'edit-select';
+            //         select.setAttribute('data-column', col);
+            //         select.setAttribute('data-row-id', row.id);
+
+            //         td.appendChild(select);
+            // }
 
 
             tr.appendChild(td);
         });
 
+        // const actionTd = document.createElement('td');
+
+        // if (isEditing) {
+        //     const updateBtn = document.createElement('button');
+        //     updateBtn.className = 'btn btn-update';
+        //     updateBtn.textContent = '💾 Update';
+        //     updateBtn.onclick = () => updateRow(row.id);
+
+        //     const cancelBtn = document.createElement('button');
+        //     cancelBtn.className = 'btn btn-cancel';
+        //     cancelBtn.textContent = '❌ Cancel';
+        //     cancelBtn.onclick = cancelEdit;
+
+        //     actionTd.appendChild(updateBtn);
+        //     actionTd.appendChild(cancelBtn);
+        // } else {
+        //     const editBtn = document.createElement('button');
+        //     editBtn.className = 'btn btn-edit';
+        //     editBtn.textContent = '✏️ Edit';
+        //     editBtn.disabled = selectedColumns.length === 0;
+        //     editBtn.onclick = () => editRow(row.id);
+
+        //     actionTd.appendChild(editBtn);
+        // }
+        // tr.appendChild(actionTd);
         tbody.appendChild(tr);
     });
 

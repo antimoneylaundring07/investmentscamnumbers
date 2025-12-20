@@ -221,5 +221,17 @@ async function isNumberAlreadyBlocked(phoneNumber) {
     }
 }
 
+// async function updateBlockedName(rowId, newName) {
+//     const { data, error } = await supabaseClient
+//         .from('permanent_blocked_number')
+//         .update({ name: newName, updated_at: new Date().toISOString() })
+//         .eq('id', rowId)
+//         .select();
+    
+//     if (error) throw error;
+//     return true;
+// }
+
+
 
 console.log('Database script loaded successfully');
