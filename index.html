@@ -20,6 +20,42 @@
             cursor: pointer;
             accent-color: #007bff;
         }
+
+        /* Platform dropdown styling */
+        .dropdown-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .platform-dropdown {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: #fff;
+            cursor: pointer;
+            min-width: 150px;
+            font-weight: 600;
+        }
+
+        .platform-dropdown:hover {
+            border-color: #007bff;
+        }
+
+        .platform-dropdown:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        .platform-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -46,6 +82,12 @@
                 <button class="download-header" onclick="downloadHeadersCSV(data)" style="margin-top: 0px;">⬇️ Downlaod
                     Header</button>
             </div>
+            <select id="platformDropdown" class="platform-dropdown" onchange="handlePlatformChange(this.value)">>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="facebook">Facebook</option>
+                <option value="instagram">Instagram</option>
+                <option value="amazon">Amazon</option>
+            </select>
             <input type="file" id="importFile" accept=".csv" style="display:none;" />
         </div>
         <div style="display: flex; gap: 10px;">

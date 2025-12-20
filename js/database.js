@@ -1,9 +1,9 @@
 
 // Database operations and CRUD functions
-async function loadData() {
+async function loadData(tableName = TABLE_NAME) {
     try {
         const { data: fetchedData, error } = await supabaseClient
-            .from(TABLE_NAME)
+            .from(tableName)
             .select('*')
             .order('id', { ascending: true });
 
@@ -230,6 +230,22 @@ async function isNumberAlreadyBlocked(phoneNumber) {
     
 //     if (error) throw error;
 //     return true;
+// }
+
+// // Add this to your database.js
+// async function loadDataByTable(tableName) {
+//     try {
+//         const { data, error } = await supabase
+//             .from(tableName)
+//             .select('*')
+//             .order('id', { ascending: true });
+
+//         if (error) throw error;
+//         return data || [];
+//     } catch (error) {
+//         console.error(`Error loading data from ${tableName}:`, error);
+//         throw error;
+//     }
 // }
 
 

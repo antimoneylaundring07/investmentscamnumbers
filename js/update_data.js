@@ -7,6 +7,14 @@ const SHOW_COLUMNS = [
     "Unblocked Date"
 ];
 
+let currentPlatform = 'whatsapp';
+const PLATFORM_TABLES = {
+    'whatsapp': 'numbers',           // Adjust to your actual table names
+    'facebook': 'facebook',
+    'instagram': 'instagram',
+    'amazon': 'amazon_accounts'
+};
+
 const DATE_COLUMNS = ["Blocked Date", "Unblocked Date", "Recharge Date"];
 const WHATSAPP_STATUS_OPTIONS = ['Active', 'Blocked', 'Restricted', 'Permanent'];
 
@@ -285,7 +293,7 @@ function toggleSelectAll(checkbox) {
 
 function updateDeleteButton() {
     const deleteBtn = document.getElementById('deleteBulkBtn');
-    if(deleteBtn) {
+    if (deleteBtn) {
         if (selectedRows.size > 0) {
             deleteBtn.style.display = 'inline-block';
             deleteBtn.textContent = `Delete rows (${selectedRows.size})`;
@@ -653,20 +661,39 @@ async function deleteRowFromDashboard(rowId, rowElem, btnElem) {
 
 async function initDashboardPage() {
     try {
-        const fetchedData = await loadData();
+        // const fetchedData = await loadData();
+        const fetchedData = await loadData(PLATFORM_TABLES['whatsapp']);
+        console.log('Initial data loaded for dashboard:', fetchedData);
         data = fetchedData;
         filteredData = [];
         isFiltering = false;
-
+        
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dataTable').style.display = 'table';
-
+        
         createSearchBoxDashboard();
         renderDashboardTable();
     } catch (error) {
         document.getElementById('loading').innerHTML =
-            `<div style="color: red;">❌ Error loading data: ${error.message}<br><br>
-            Check console for details.</div>`;
+        `<div style="color: red;">❌ Error loading data: ${error.message}<br><br>
+        Check console for details.</div>`;
+    }
+}
+
+async function handlePlatformChange(platform) {
+    currentPlatform = platform;
+    const tableName = PLATFORM_TABLES[platform];
+    console.log('Table:', tableName);
+    
+    try {
+        const fetchedData = await loadData(tableName);
+        console.log('Data for', platform, ':', fetchedData);
+        data = fetchedData;
+        filteredData = [];
+        isFiltering = false;
+        renderDashboardTable();
+    } catch (error) {
+        alert('Error loading data: ' + error.message);
     }
 }
 
