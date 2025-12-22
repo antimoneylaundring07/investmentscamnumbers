@@ -96,9 +96,9 @@ async function deleteMultipleBlockedRows(rowId) {
     }
 }
 
-async function importCSVData(newRecords, platform) {
+async function importCSVData(newRecords, tableName) {
     try {
-        const tableName = PLATFORM_TABLES[platform];
+        // const tableName = PLATFORM_TABLES[platform];
 
         if (!tableName) {
             throw new Error('Invalid platform selected');
@@ -232,10 +232,8 @@ async function isNumberAlreadyBlocked(phoneNumber) {
 // Update current status in database
 async function updateBlockedStatusInDB(rowId, newStatus, columnName = 'Current Satus') {
     try {
-        // Your Supabase / database update logic here
-        // Example with Supabase:
         const { data, error } = await supabaseClient
-            .from('permanent_blocked_number')  // Change table name as needed
+            .from('permanent_blocked_number')
             .update({ [columnName]: newStatus })
             .eq('id', rowId);
 

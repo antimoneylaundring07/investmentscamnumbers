@@ -1,9 +1,9 @@
 const PLATFORM = {
-    whatsapp: 'numbers',
-    facebook: 'facebook',
-    instagram: 'instagram',
-    amazon: 'amazon_accounts',
-    telegram: 'telegram'
+    'whatsapp': 'numbers',
+    'facebook': 'facebook',
+    'instagram': 'instagram',
+    'amazon': 'amazon_accounts',
+    'telegram': 'telegram'
 };
 
 function triggerImport() {
