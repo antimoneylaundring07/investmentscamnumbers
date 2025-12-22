@@ -238,14 +238,14 @@ function renderDashboardTable() {
     displayData.forEach(row => {
         const tr = document.createElement('tr');
 
-        const whatsappStatus = row['WhatsApp Status'] || row['whatsapp_status'] || '';
-        if (whatsappStatus.toString().toLowerCase().trim() === 'blocked') {
+        const whatsappStatus = row['WhatsApp Status'] || row['whatsapp_status'] || row['Account Status'] || row['Current Status'] || row['Status'] || '';
+        if (whatsappStatus.toString().toLowerCase().trim() === 'blocked' || whatsappStatus.toString().toLowerCase().trim() === 'video verification') {
             tr.className = 'blocked';
         } else if (whatsappStatus.toString().toLowerCase().trim() === 'active') {
             tr.className = 'active';
-        } else if (whatsappStatus.toString().toLowerCase().trim() === 'restricted') {
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'restricted' || whatsappStatus.toString().toLowerCase().trim() === 'frozen') {
             tr.className = 'restricted';
-        } else if (whatsappStatus.toString().toLowerCase().trim() === 'permanent') {
+        } else if (whatsappStatus.toString().toLowerCase().trim() === 'permanent' || whatsappStatus.toString().toLowerCase().trim() === 'permanent blocked') {
             tr.className = 'permanent';
         }
 
@@ -302,8 +302,6 @@ function updateDeleteButton() {
             deleteBtn.textContent = 'Delete rows';
         }
     }
-    // deleteBtn.textContent = `Delete rows (${selectedRows.size})`;
-    // deleteBtn.disabled = selectedRows.size === 0;
 }
 
 async function bulkDeleteSelected() {
