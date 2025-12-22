@@ -63,10 +63,6 @@ function renderBlockedTable() {
     // Get all column names dynamically from first row
     const columns = Object.keys(displayData[0]);
 
-    tableHeader.innerHTML = '<tr>' +
-        columns.map(col => '<th>' + col + '</th>').join('') +
-        '<th>Actions</th></tr>';
-
     // Filter out unnecessary columns
     const excludeColumns = ['created_at', 'updated_at'];
     const displayColumns = columns.filter(col => !excludeColumns.includes(col));
@@ -75,9 +71,7 @@ function renderBlockedTable() {
     let headerHTML = '<tr>';
     headerHTML += '<th class="checkbox-cell"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"></th>';
 
-    // Add dynamic columns
     displayColumns.forEach(col => {
-        // Format column name (convert snake_case to Title Case)
         const formattedCol = col
             .split('_')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -85,19 +79,28 @@ function renderBlockedTable() {
         headerHTML += `<th>${formattedCol}</th>`;
     });
 
+    // Actions LAST
+    headerHTML += '<th>Actions</th></tr>';
     tableHeader.innerHTML = headerHTML;
 
     // Clear existing rows
     tbody.innerHTML = '';
 
+    // Decide the actual key name for Current Status (e.g. "Current Status" or "current_status")
+    // We’ll infer from the first row
+    const firstRow = displayData[0];
+    const currentStatusKey =
+        Object.keys(firstRow).find(
+            k => k.toLowerCase().replace(/\s+/g, '_') === 'current_status'
+        ) || 'Current Status'; // fallback if you know exact name
+
     // Add data rows
     displayData.forEach(row => {
         const tr = document.createElement('tr');
-        tr.className = 'blocked-row';
         const isEditing = editingRowId === row.id;
 
         if (isEditing) tr.className = 'editing';
-        
+
         // Checkbox cell
         const checkboxTd = document.createElement('td');
         checkboxTd.className = 'checkbox-cell';
@@ -116,62 +119,129 @@ function renderBlockedTable() {
         checkboxTd.appendChild(checkbox);
         tr.appendChild(checkboxTd);
 
-        // Add dynamic data columns
+        // Data columns
         displayColumns.forEach(col => {
             const td = document.createElement('td');
-
             let value = row[col];
 
-            if (col === 'Number') {
-                // bold number
-                td.innerHTML = `<strong>${value == null ? '' : value}</strong>`;
+            // Normal display value
+            const displayValue = value == null ? '' : value;
+
+            const isCurrentStatusCol =
+                col.toLowerCase().replace(/\s+/g, '_') === 'current_status' ||
+                col === currentStatusKey;
+
+            // Only "Current Status" becomes editable when row is in edit mode
+            if (isEditing && isCurrentStatusCol) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'edit-input';
+                input.value = displayValue;
+                input.setAttribute('data-column', col);
+                input.setAttribute('data-row-id', row.id);
+                td.appendChild(input);
             } else {
-                // show exactly what DB has: "NA", etc. Only null/undefined => empty.
-                td.textContent = value == null ? '' : value;
+                if (col === 'Number') {
+                    td.innerHTML = `<strong>${displayValue}</strong>`;
+                } else {
+                    td.textContent = displayValue;
+                }
             }
-            // if (col === 'Current Status'){
-            //     const select = document.createElement('select');
-            //         select.className = 'edit-select';
-            //         select.setAttribute('data-column', col);
-            //         select.setAttribute('data-row-id', row.id);
-
-            //         td.appendChild(select);
-            // }
-
 
             tr.appendChild(td);
         });
 
-        // const actionTd = document.createElement('td');
+        // Actions cell (LAST)
+        const actionTd = document.createElement('td');
 
-        // if (isEditing) {
-        //     const updateBtn = document.createElement('button');
-        //     updateBtn.className = 'btn btn-update';
-        //     updateBtn.textContent = '💾 Update';
-        //     updateBtn.onclick = () => updateRow(row.id);
+        if (isEditing) {
+            const updateBtn = document.createElement('button');
+            updateBtn.className = 'btn btn-update';
+            updateBtn.textContent = '💾 Update';
+            updateBtn.onclick = () => updateRow(row.id, currentStatusKey);
 
-        //     const cancelBtn = document.createElement('button');
-        //     cancelBtn.className = 'btn btn-cancel';
-        //     cancelBtn.textContent = '❌ Cancel';
-        //     cancelBtn.onclick = cancelEdit;
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-cancel';
+            cancelBtn.textContent = '❌ Cancel';
+            cancelBtn.onclick = cancelEdit;
 
-        //     actionTd.appendChild(updateBtn);
-        //     actionTd.appendChild(cancelBtn);
-        // } else {
-        //     const editBtn = document.createElement('button');
-        //     editBtn.className = 'btn btn-edit';
-        //     editBtn.textContent = '✏️ Edit';
-        //     editBtn.disabled = selectedColumns.length === 0;
-        //     editBtn.onclick = () => editRow(row.id);
+            actionTd.appendChild(updateBtn);
+            actionTd.appendChild(cancelBtn);
+        } else {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-edit';
+            editBtn.textContent = '✏️ Edit';
 
-        //     actionTd.appendChild(editBtn);
-        // }
-        // tr.appendChild(actionTd);
+            // Enable edit always, or you can add conditions
+            editBtn.onclick = () => editRow(row.id);
+
+            actionTd.appendChild(editBtn);
+        }
+
+        tr.appendChild(actionTd);
         tbody.appendChild(tr);
     });
+}
 
-    dataTable.style.display = 'table';
-    // renderPagination();
+function editRow(rowId) {
+    editingRowId = rowId;
+    renderBlockedTable();
+}
+
+function cancelEdit() {
+    editingRowId = null;
+    renderBlockedTable();
+}
+
+async function updateRow(rowId, currentStatusKey = 'Current Status') {
+    const tbody = document.getElementById('tableBody');
+
+    // Find the input for Current Status in this row
+    const input = tbody.querySelector(
+        `input.edit-input[data-row-id="${rowId}"][data-column="${currentStatusKey}"]`
+    );
+
+    if (!input) {
+        console.warn('No Current Status input found for row:', rowId);
+        return;
+    }
+
+    const newValue = input.value.trim();
+
+    // Find in main array
+    const arr = isFiltering ? filteredData : blockedData_arr;
+    const idx = arr.findIndex(r => r.id === rowId);
+    if (idx === -1) {
+        alert('Row not found');
+        return;
+    }
+
+    try {
+        // Call your DB function from database.js
+        const success = await updateBlockedStatusInDB(rowId, newValue, currentStatusKey);
+
+        if (!success) {
+            alert('❌ Failed to update Current Status in DB');
+            return;
+        }
+
+        // Update both arrays (blockedData_arr + filteredData)
+        const updateInArr = array => {
+            const i = array.findIndex(r => r.id === rowId);
+            if (i !== -1) {
+                array[i][currentStatusKey] = newValue;
+            }
+        };
+        updateInArr(blockedData_arr);
+        updateInArr(filteredData);
+
+        alert('✅ Current Status updated');
+        editingRowId = null;
+        renderBlockedTable();
+    } catch (err) {
+        console.error(err);
+        alert('❌ Error updating Current Status: ' + err.message);
+    }
 }
 
 

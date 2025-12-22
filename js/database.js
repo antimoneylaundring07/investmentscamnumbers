@@ -229,4 +229,29 @@ async function isNumberAlreadyBlocked(phoneNumber) {
     }
 }
 
+// Update current status in database
+async function updateBlockedStatusInDB(rowId, newStatus, columnName = 'Current Satus') {
+    try {
+        // Your Supabase / database update logic here
+        // Example with Supabase:
+        const { data, error } = await supabaseClient
+            .from('permanent_blocked_number')  // Change table name as needed
+            .update({ [columnName]: newStatus })
+            .eq('id', rowId);
+
+        if (error) {
+            console.error('DB Error:', error);
+            return false;
+        }
+
+        console.log('✅ Updated in DB:', data);
+        return true;
+
+    } catch (err) {
+        console.error('Error in updateBlockedStatusInDB:', err);
+        throw err;
+    }
+}
+
+
 console.log('Database script loaded successfully');
